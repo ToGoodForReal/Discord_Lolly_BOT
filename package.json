@@ -1,0 +1,23 @@
+{
+  "name": "lolly",
+  "version": "0.0.1",
+  "description": "Just Lolly",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Elitinho123456/Discord_Lolly_BOT.git"
+  },
+  "author": "Elitinho123456",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Elitinho123456/Discord_Lolly_BOT/issues"
+  },
+  "homepage": "https://github.com/Elitinho123456/Discord_Lolly_BOT#readme",
+  "dependencies": {
+    "discord.js": "^14.17.3",
+    "dotenv": "^16.4.7"
+  }
+}
