@@ -1,10 +1,11 @@
 {
   "name": "lolly",
-  "version": "0.0.1",
+  "version": "0.0.2a",
   "description": "Just Lolly",
   "main": "bot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --watch --no-warnings src/bot.js"
   },
   "repository": {
     "type": "git",
