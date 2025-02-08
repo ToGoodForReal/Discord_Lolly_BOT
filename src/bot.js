@@ -1,4 +1,5 @@
 const discord = require('discord.js');
+const { EmbedBuilder } = require('discord.js');
 const dotenv = require('dotenv');
 dotenv.config();
 const login = process.env.TOKEN
@@ -16,15 +17,22 @@ var replyItems = [
   { text: 'AAAAAAA você é chato demais', probability: 0.1 },
   { text: 'Vai tomar no cu o(≧口≦)o', probability: 0.09 },
   { text: 'Oh inferno (ㆆ_ㆆ)', probability: 0.1 },
-  { text: 'Tá bom, tá bom eu falo Pong, Feliz???', probability: 0.1 },
+  { text: 'Tá bom, tá bom eu falo Pong, Feliz???', probability: 0.05 },
   { text: 'Big balls inside your mouth', probability: 0.1 },
-  { text: 'Verme Imundo', probability: 0.1 },
+  { text: 'Verme Imundo', probability: 0.05 },
   { text: 'Seu cu é meu', probability: 0.1 },
-  { text: 'Não.', probability: 0.1 },
+  { text: 'Não.', probability: 0.15 },
   { text: 'Lorem Impsum', probability: 0.1 },
   { text: 'O seu inutil, vai buscar algo pra fazer', probability: 0.1 },
   { text: 'Mesmo sendo um bot, eu tenho sentimentos, sabia?', probability: 0.1 },
   { text: 'Mesmo sendo um mero bot totalmente Scriptado, sem nenhum tipo de inteligencia artificial, eu consigo perceber tamanha insiguinificancia em suas palavras. Você com essa busca incessante por conseguir uma misera resposta pre programda de Pong me enoja, vá lá fora ver o céu, ou sei lá falar com um amigo, ah é você não deve ter um pra estar perdendo seu precioso tempo aqui comigo seu merda, porquê você não vai pular de um prédio e eliminar essa sua existencia futil da humanidade.', probability: 0.001 },
+];
+
+var RockPaperScissors = [
+  { text: 'pedra', probability: 0.33 },
+  { text: 'papel', probability: 0.33 },
+  { text: 'tesoura', probability: 0.33 },
+  { text: 'shotgun', probability: 0.01 },
 ];
 
 //// end vars ////
@@ -40,6 +48,18 @@ function reply(items) {
     sum += items[i].probability;
     if (random <= sum) {
       return items[i].text;
+    }
+  }
+}
+
+function minigame(escolha) {
+  var random = Math.random();
+  var sum = 0;
+
+  for (var i = 0; i < escolha.length; i++) {
+    sum += escolha[i].probability;
+    if (random <= sum) {
+      return escolha[i].text;
     }
   }
 }
@@ -67,17 +87,99 @@ client.on('ready', (c) => {
   console.log(`Logged in as ${c.user.tag}!`);
 });
 
-client.on('messageCreate', async (message) => {
+client.on('interactionCreate', (interaction) => {
+  if (!interaction.isChatInputCommand()) return;
 
-  console.log(message.content, message.author.username);
-  if (message.author.bot) return;
+  ///////// Ping /////////
 
-  if (message.content === 'l+ping' && message.author.username === 'xonoxonem') {
-    const response = 'Mesmo sendo um mero bot totalmente Scriptado, sem nenhum tipo de inteligencia artificial, eu consigo perceber tamanha insiguinificancia em suas palavras. Você com essa busca incessante por conseguir uma misera resposta pre programda de Pong me enoja, vá lá fora ver o céu, ou sei lá falar com um amigo, ah é você não deve ter um pra estar perdendo seu precioso tempo aqui comigo seu merda, porquê você não vai pular de um prédio e eliminar essa sua existencia futil da humanidade.';
-    await message.reply(response);
-  } else if (message.content === 'l+ping') {
+  if (interaction.commandName === 'ping' && interaction.user.username === 'xonoxonem') {
+    interaction.reply('Mesmo sendo um mero bot totalmente Scriptado, sem nenhum tipo de inteligencia artificial, eu consigo perceber tamanha insiguinificancia em suas palavras. Você com essa busca incessante por conseguir uma misera resposta pre programda de Pong me enoja, vá lá fora ver o céu, ou sei lá falar com um amigo, ah é você não deve ter um pra estar perdendo seu precioso tempo aqui comigo seu merda, porquê você não vai pular de um prédio e eliminar essa sua existencia futil da humanidade.');
+  } else if (interaction.commandName === 'ping') {
     const response = reply(replyItems);
-    await message.reply(response);
+    interaction.reply(response);
   }
+
+  /////// Minigame ///////
+
+  if (interaction.commandName === 'minigame') {
+    const escolha = minigame(RockPaperScissors);
+
+    let embed = new EmbedBuilder()
+        .setTitle('Resultados!')
+        .setDescription(`O bot escolheu: ${escolha}`)
+        .setColor('Random')
+        .setThumbnail('https://goglobalways.com/wp-content/uploads/2023/03/Rock-Scissors-Game.png');
+
+    if (interaction.options.getString('jogada_usuario') === 'pedra') {
+        embed.addFields(
+            { name: 'Sua jogada:', value: 'Pedra' },
+        );
+        if (escolha === 'pedra') {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Empate!' },
+            );
+        } else if (escolha === 'papel') {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Eu Venci! >:)' },
+            );
+        } else if(escolha === 'shotgun') {
+            embed.addFields(
+                { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
+            );
+        } else {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Eu perdi... :(' },
+            );
+        }
+    } else if (interaction.options.getString('jogada_usuario') === 'papel') {
+        embed.addFields(
+            { name: 'Sua jogada:', value: 'Papel' },
+        );
+        if (escolha === 'pedra') {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Você Venceu! :(' },
+            );
+        } else if (escolha === 'papel') {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Empate!' },
+            );
+        } else if(escolha === 'shotgun') {
+          embed.addFields(
+              { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
+          );
+        } else {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Eu Venci! >:)' },
+            );
+        }
+    } else if (interaction.options.getString('jogada_usuario') === 'tesoura') {
+        embed.addFields(
+            { name: 'Sua jogada:', value: 'Tesoura' },
+        );
+        if (escolha === 'pedra') {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Eu Venci! >:)' },
+            );
+        } else if (escolha === 'papel') {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Você Venceu! :(' },
+            );
+        } else if(escolha === 'shotgun') {
+          embed.addFields(
+              { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
+          );
+        } else {
+            embed.addFields(
+                { name: 'Resultado:', value: 'Empate!' },
+            );
+        }
+    } else {
+        embed.addFields(
+            { name: 'Resultado:', value: 'Jogada inválida.' },
+        );
+    }
+
+    interaction.reply({ embeds: [embed] });
+}
 
 });
