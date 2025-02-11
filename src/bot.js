@@ -1,3 +1,5 @@
+const { Player } = require('discord-player');
+const { YoutubeiExtractor } = require('discord-player-youtubei')
 const discord = require('discord.js');
 const { EmbedBuilder } = require('discord.js');
 const dotenv = require('dotenv');
@@ -73,6 +75,7 @@ const client = new discord.Client({
     discord.IntentsBitField.Flags.GuildMembers,
     discord.IntentsBitField.Flags.GuildMessages,
     discord.IntentsBitField.Flags.MessageContent,
+    discord.IntentsBitField.Flags.GuildVoiceStates,
 
   ],
   Partials: [
@@ -81,6 +84,42 @@ const client = new discord.Client({
     discord.Partials.Reaction
   ],
 });
+
+const player = new Player(client);
+player.extractors.register(YoutubeiExtractor).then(()=> {
+  console.log('Extractor Carregado');
+}).catch((e) => console.log(e));
+
+player.events.on('playerStart', (queue, track) =>{
+  queue.metadata.channel.send(`Tocando Atualmente **${track.title}**`)
+});
+
+player.events.on('audioTrackAdd', (queue, track) => {
+  queue.metadata.channel.send(`Adicionado a Fila **${track.title}**`)
+});
+
+player.events.on('audioTracksAdd', (queue, track) => {
+  queue.metadata.channel.send(`Adicionados as musicas a Fila`)
+});
+
+player.events.on('playerSkip', (queue, track) => {
+  queue.metadata.channel.send(`Skipando **${track.title}**`)
+});
+
+player.events.on('disconnect', (queue) => {
+  queue.metadata.channel.send(`Saindo por agora`)
+});
+
+player.events.on('emptyChannel', (queue) => {
+  queue.metadata.channel.send(`Me abandonaram aqui, sacanagem viu >:(`)
+});
+
+player.events.on('emptyQueue', (queue) => {
+  queue.metadata.channel.send(`Moço ( •̀ ω •́ )✧, cabou as músicas!`)
+});
+
+
+
 client.login(login);
 
 client.on('ready', (c) => {
@@ -97,7 +136,7 @@ client.on('interactionCreate', (interaction) => {
   } else if (interaction.commandName === 'ping') {
     const response = reply(replyItems);
     interaction.reply(response);
-  }
+  };
 
   /////// Minigame ///////
 
@@ -105,81 +144,117 @@ client.on('interactionCreate', (interaction) => {
     const escolha = minigame(RockPaperScissors);
 
     let embed = new EmbedBuilder()
-        .setTitle('Resultados!')
-        .setDescription(`O bot escolheu: ${escolha}`)
-        .setColor('Random')
-        .setThumbnail('https://goglobalways.com/wp-content/uploads/2023/03/Rock-Scissors-Game.png');
+      .setTitle('Resultados!')
+      .setDescription(`O bot escolheu: ${escolha}`)
+      .setColor('Random')
+      .setThumbnail('https://goglobalways.com/wp-content/uploads/2023/03/Rock-Scissors-Game.png');
 
     if (interaction.options.getString('jogada_usuario') === 'pedra') {
+      embed.addFields(
+        { name: 'Sua jogada:', value: 'Pedra' },
+      );
+      if (escolha === 'pedra') {
         embed.addFields(
-            { name: 'Sua jogada:', value: 'Pedra' },
+          { name: 'Resultado:', value: 'Empate!' },
         );
-        if (escolha === 'pedra') {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Empate!' },
-            );
-        } else if (escolha === 'papel') {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Eu Venci! >:)' },
-            );
-        } else if(escolha === 'shotgun') {
-            embed.addFields(
-                { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
-            );
-        } else {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Eu perdi... :(' },
-            );
-        }
+      } else if (escolha === 'papel') {
+        embed.addFields(
+          { name: 'Resultado:', value: 'Eu Venci! >:)' },
+        );
+      } else if (escolha === 'shotgun') {
+        embed.addFields(
+          { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
+        );
+      } else {
+        embed.addFields(
+          { name: 'Resultado:', value: 'Eu perdi... :(' },
+        );
+      }
     } else if (interaction.options.getString('jogada_usuario') === 'papel') {
+      embed.addFields(
+        { name: 'Sua jogada:', value: 'Papel' },
+      );
+      if (escolha === 'pedra') {
         embed.addFields(
-            { name: 'Sua jogada:', value: 'Papel' },
+          { name: 'Resultado:', value: 'Você Venceu! :(' },
         );
-        if (escolha === 'pedra') {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Você Venceu! :(' },
-            );
-        } else if (escolha === 'papel') {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Empate!' },
-            );
-        } else if(escolha === 'shotgun') {
-          embed.addFields(
-              { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
-          );
-        } else {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Eu Venci! >:)' },
-            );
-        }
+      } else if (escolha === 'papel') {
+        embed.addFields(
+          { name: 'Resultado:', value: 'Empate!' },
+        );
+      } else if (escolha === 'shotgun') {
+        embed.addFields(
+          { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
+        );
+      } else {
+        embed.addFields(
+          { name: 'Resultado:', value: 'Eu Venci! >:)' },
+        );
+      }
     } else if (interaction.options.getString('jogada_usuario') === 'tesoura') {
+      embed.addFields(
+        { name: 'Sua jogada:', value: 'Tesoura' },
+      );
+      if (escolha === 'pedra') {
         embed.addFields(
-            { name: 'Sua jogada:', value: 'Tesoura' },
+          { name: 'Resultado:', value: 'Eu Venci! >:)' },
         );
-        if (escolha === 'pedra') {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Eu Venci! >:)' },
-            );
-        } else if (escolha === 'papel') {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Você Venceu! :(' },
-            );
-        } else if(escolha === 'shotgun') {
-          embed.addFields(
-              { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
-          );
-        } else {
-            embed.addFields(
-                { name: 'Resultado:', value: 'Empate!' },
-            );
-        }
+      } else if (escolha === 'papel') {
+        embed.addFields(
+          { name: 'Resultado:', value: 'Você Venceu! :(' },
+        );
+      } else if (escolha === 'shotgun') {
+        embed.addFields(
+          { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
+        );
+      } else {
+        embed.addFields(
+          { name: 'Resultado:', value: 'Empate!' },
+        );
+      }
     } else {
-        embed.addFields(
-            { name: 'Resultado:', value: 'Jogada inválida.' },
-        );
+      embed.addFields(
+        { name: 'Resultado:', value: 'Jogada inválida.' },
+      );
     }
 
     interaction.reply({ embeds: [embed] });
-}
+  };
+
+  ///// Music /////
+
+  if (interaction.commandName === 'play') {
+
+    const voiceChannel = interaction.member.voice.channel;
+    const args = interaction.message
+    const result = FFMPEG_ARGS_PIPED;
+
+    player.play(voiceChannel, result, {
+      nodeOptions: {
+        metadata: {
+          channel: interaction.channel,
+          client: interaction.guild.members.me,
+          RequestedBy: interaction.user,
+        },
+        selfDeaf: true,
+        volume: 80,
+        leaveOnEmpenty: true,
+        leaveOnEmpentyCooldown: 3000,
+        leaveOnEnd: true,
+        leaveOnEndCooldown: 3000,
+      },
+    });
+
+  } else if (interaction.commandName === 'skip') {
+
+  } else if (interaction.commandName === 'pause') {
+
+  } else if (interaction.commandName === 'resume') {
+
+  } else if (interaction.commandName === 'queue') {
+
+  } else if (interaction.commandName === 'stop') {
+
+  }
 
 });

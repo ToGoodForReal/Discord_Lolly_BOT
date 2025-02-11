@@ -23,8 +23,11 @@
     "@discordjs/voice": "^0.18.0",
     "discord-api-types": "^0.37.119",
     "discord-player": "^7.1.0",
+    "discord-player-youtubei": "^1.4.2",
     "discord.js": "^14.17.3",
     "dotenv": "^16.4.7",
-    "inflight": "^1.0.6"
+    "ffmpeg-static": "^5.2.0",
+    "inflight": "^1.0.6",
+    "mediaplex": "^1.0.0"
   }
 }
