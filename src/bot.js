@@ -1,9 +1,10 @@
 const { Player } = require('discord-player');
 const { YoutubeiExtractor } = require('discord-player-youtubei')
 const discord = require('discord.js');
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageEmbed } = require('discord.js');
 const dotenv = require('dotenv');
 dotenv.config();
+
 const login = process.env.TOKEN
 
 ////// vars //////
@@ -42,26 +43,14 @@ var RockPaperScissors = [
 
 //////////////////////// Function //////////////////////////
 
-function reply(items) {
-  var random = Math.random();
-  var sum = 0;
+function selectRandomItem(items) {
+  const random = Math.random();
+  let sum = 0;
 
-  for (var i = 0; i < items.length; i++) {
-    sum += items[i].probability;
+  for (const item of items) {
+    sum += item.probability;
     if (random <= sum) {
-      return items[i].text;
-    }
-  }
-}
-
-function minigame(escolha) {
-  var random = Math.random();
-  var sum = 0;
-
-  for (var i = 0; i < escolha.length; i++) {
-    sum += escolha[i].probability;
-    if (random <= sum) {
-      return escolha[i].text;
+      return item.text;
     }
   }
 }
@@ -85,17 +74,42 @@ const client = new discord.Client({
   ],
 });
 
-const player = new Player(client);
-player.extractors.register(YoutubeiExtractor).then(()=> {
+const player = new Player(client, {
+  ytdlOptions: {
+    quality: "highestaudio",
+    highWaterMark: 1 << 25
+  }
+});
+
+
+player.extractors.register(YoutubeiExtractor).then(() => {
   console.log('Extractor Carregado');
 }).catch((e) => console.log(e));
 
-player.events.on('playerStart', (queue, track) =>{
-  queue.metadata.channel.send(`Tocando Atualmente **${track.title}**`)
+player.events.on('playerStart', (queue, track) => {
+
+  console.log(track.title)
+
 });
 
 player.events.on('audioTrackAdd', (queue, track) => {
-  queue.metadata.channel.send(`Adicionado a Fila **${track.title}**`)
+
+  const embed = new EmbedBuilder()
+    .setColor('#dbffff')
+    .setTitle(track.title)
+    .setDescription(`**${track.title}** foi adicionado à fila!`)
+    .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+    .setImage(track.thumbnail)
+    .setAuthor(
+      { name: track.author, iconURL: track.author.avatarURL }
+    )
+    .addFields(
+      { name: 'Duração', value: track.duration, inline: true },
+      { name: 'URL', value: track.url, inline: true }
+    )
+
+  queue.metadata.channel.send({ embeds: [embed] });
+
 });
 
 player.events.on('audioTracksAdd', (queue, track) => {
@@ -107,7 +121,7 @@ player.events.on('playerSkip', (queue, track) => {
 });
 
 player.events.on('disconnect', (queue) => {
-  queue.metadata.channel.send(`Saindo por agora`)
+  queue.metadata.channel.send(`Me Humilharu`)
 });
 
 player.events.on('emptyChannel', (queue) => {
@@ -126,6 +140,8 @@ client.on('ready', (c) => {
   console.log(`Logged in as ${c.user.tag}!`);
 });
 
+
+
 client.on('interactionCreate', (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -134,14 +150,14 @@ client.on('interactionCreate', (interaction) => {
   if (interaction.commandName === 'ping' && interaction.user.username === 'xonoxonem') {
     interaction.reply('Mesmo sendo um mero bot totalmente Scriptado, sem nenhum tipo de inteligencia artificial, eu consigo perceber tamanha insiguinificancia em suas palavras. Você com essa busca incessante por conseguir uma misera resposta pre programda de Pong me enoja, vá lá fora ver o céu, ou sei lá falar com um amigo, ah é você não deve ter um pra estar perdendo seu precioso tempo aqui comigo seu merda, porquê você não vai pular de um prédio e eliminar essa sua existencia futil da humanidade.');
   } else if (interaction.commandName === 'ping') {
-    const response = reply(replyItems);
+    const response = selectRandomItem(replyItems);
     interaction.reply(response);
   };
 
   /////// Minigame ///////
 
   if (interaction.commandName === 'minigame') {
-    const escolha = minigame(RockPaperScissors);
+    const escolha = selectRandomItem(RockPaperScissors);
 
     let embed = new EmbedBuilder()
       .setTitle('Resultados!')
@@ -226,10 +242,14 @@ client.on('interactionCreate', (interaction) => {
   if (interaction.commandName === 'play') {
 
     const voiceChannel = interaction.member.voice.channel;
-    const args = interaction.message
-    const result = FFMPEG_ARGS_PIPED;
+    const args = interaction.options.getString('url')
 
-    player.play(voiceChannel, result, {
+    if (!voiceChannel) return interaction.reply('Você precisa estar em uma call primeiro bobinho ╰(*°▽°*)╯')
+
+    if (!args) return interaction.reply('Me de algo para buscar!!')
+
+    player.play(voiceChannel, args, {
+
       nodeOptions: {
         metadata: {
           channel: interaction.channel,
@@ -238,23 +258,121 @@ client.on('interactionCreate', (interaction) => {
         },
         selfDeaf: true,
         volume: 80,
-        leaveOnEmpenty: true,
-        leaveOnEmpentyCooldown: 3000,
+        leaveOnEmpty: true,
+        leaveOnEmptyCooldown: 30000,
         leaveOnEnd: true,
-        leaveOnEndCooldown: 3000,
+        leaveOnEndCooldown: 30000,
       },
     });
 
-  } else if (interaction.commandName === 'skip') {
+    interaction.reply(`🔎 Procurando: **${args}**`);
+  }
 
-  } else if (interaction.commandName === 'pause') {
+  else if (interaction.commandName === 'skip') {
 
-  } else if (interaction.commandName === 'resume') {
+    const voiceChannel = interaction.member.voice.channel;
 
-  } else if (interaction.commandName === 'queue') {
+    if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
 
-  } else if (interaction.commandName === 'stop') {
+    const queue = player.queues.get(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, **BIZONHO** O.O');
+
+    queue.node.skip();
+
+    const embed = new EmbedBuilder()
+      .setColor('#fff4ce')
+      .setTitle('Okay! Pulando para a próxima música')
+      .setDescription(`A música foi **PULADA**`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+
+    interaction.reply({ embeds: [embed] });
 
   }
+
+  else if (interaction.commandName === 'pause') {
+
+    const voiceChannel = interaction.member.voice.channel;
+
+    if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
+
+    const queue = player.queues.get(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, MEDONHO O.O');
+
+
+    if (queue.node.isPaused()) return message.channel.send('Já tá Pausado, quer que eu pause x2??')
+    queue.node.pause();
+    interaction.reply('Vou pausar pra princesa =_=')
+
+  }
+
+  else if (interaction.commandName === 'resume') {
+
+    const voiceChannel = interaction.member.voice.channel;
+
+    if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
+
+    const queue = player.queues.get(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, MEDONHO O.O');
+
+
+    if (!queue.node.isPaused()) return message.channel.send('Tu é surdo? já tá tocando seu lezado >:(')
+    queue.node.resume();
+    interaction.reply('Voltando à Festa! Oh Yeah ☆*: .｡. o(≧▽≦)o .｡.:*☆')
+
+  }
+
+  else if (interaction.commandName === 'queue') {
+
+    const voiceChannel = interaction.member.voice.channel;
+
+    if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
+
+    const queue = player.queues.get(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, **BIZARRO** O.O');
+
+    const history = queue.history.tracks.data.map(x => x.title);
+    const next = queue.tracks.data.map(x => x.title);
+    const list = [...history, `> ${queue.currentTrack.title}`, ...next];
+
+    interaction.reply(`Atualmente a lista no servidor é: ${interaction.guild.name}\n${list.join('\n')}`)
+
+  }
+
+  else if (interaction.commandName === 'stop') {
+
+    const voiceChannel = interaction.member.voice.channel;
+
+    if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
+
+    const queue = player.queues.get(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, BIZARRO O.O');
+
+    interaction.reply('Paro-Paro-Paro; Manual do Mundo não me processa 👌');
+    queue.delete();
+    queue.node.stop();
+  }
+
+  else if (interaction.commandName === 'volume') {
+    const queue = player.queues.get(interaction.guild); 
+
+    if (!queue) {
+        return interaction.reply({ content: 'Não tem nenhum Hit no momento!', ephemeral: true });
+    }
+
+    const volumeVal = interaction.options.getInteger('vol');
+
+    if (volumeVal === null || isNaN(volumeVal) || volumeVal < 0 || volumeVal > 100) {
+        return interaction.reply({ content: 'Por favor, forneça um valor de volume válido entre 0 a 100.', ephemeral: true });
+    }
+
+    queue.node.setVolume(volumeVal);
+
+    return interaction.reply({ content: `Volume definido para **${volumeVal}%**!`, ephemeral: true });
+}
 
 });

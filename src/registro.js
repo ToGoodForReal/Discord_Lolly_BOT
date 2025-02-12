@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
+const { REST, Routes, ApplicationCommandOptionType, Application } = require('discord.js');
 
 const command = [
 
@@ -8,6 +8,7 @@ const command = [
         description: 'Replies with Pong!',
         options: []
     },
+
     {
         name: 'minigame',
         description: 'Jogue pedra, papel ou tesoura comigo!',
@@ -30,6 +31,51 @@ const command = [
                         value: 'tesoura',
                     },
                 ],
+                required: true,
+            },
+        ],
+    },
+
+    {
+        name: 'play',
+        description: 'Selecione uma música e comece a escutar!',
+        required: true,
+        options: [
+            {
+                name: 'url',
+                description: 'Direcione a URL da musica que deseja!',
+                type: ApplicationCommandOptionType.String,
+            },
+        ],
+    },
+    {
+        name: 'skip',
+        description: 'Pula para proxima musica da fila atual'
+    },
+    {
+        name: 'stop',
+        description: 'Para e limpa a ffila atual'
+    },
+    {
+        name: 'queue',
+        description: 'Mostra a fila atual'
+    },
+    {
+        name: 'pause',
+        description: 'Pausa a fila atual'
+    },
+    {
+        name: 'resume',
+        description: 'Continua a musica pausada'
+    },
+    {
+        name: 'volume',
+        description: 'Altere o volume das músicas',
+        options: [
+            {
+                name: 'vol',
+                description: 'coloque o valor a ser alterado!',
+                type: ApplicationCommandOptionType.Integer,
                 required: true,
             },
         ],
