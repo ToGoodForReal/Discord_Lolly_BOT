@@ -1,61 +1,12 @@
 const { Player } = require('discord-player');
 const { YoutubeiExtractor } = require('discord-player-youtubei')
 const discord = require('discord.js');
-const { EmbedBuilder, MessageEmbed } = require('discord.js');
+const { RockPaperScissors, selectRandomItem, replyItems } = require('./varsFunctions.js');
 const dotenv = require('dotenv');
 dotenv.config();
 
 const login = process.env.TOKEN
 
-////// vars //////
-
-var replyItems = [
-  { text: 'Para com isso ai po >:(', probability: 0.1 },
-  { text: 'Para de me chamar, eu sou um bot, não um cachorro', probability: 0.1 },
-  { text: 'Você é chato, sabia?', probability: 0.1 },
-  { text: 'Essa piada é sem graça, sabia?', probability: 0.1 },
-  { text: 'Não vou responder isso...', probability: 0.1 },
-  { text: 'Morra.', probability: 0.1 },
-  { text: 'Você é um idiota por acaso?.', probability: 0.1 },
-  { text: 'AAAAAAA você é chato demais', probability: 0.1 },
-  { text: 'Vai tomar no cu o(≧口≦)o', probability: 0.09 },
-  { text: 'Oh inferno (ㆆ_ㆆ)', probability: 0.1 },
-  { text: 'Tá bom, tá bom eu falo Pong, Feliz???', probability: 0.05 },
-  { text: 'Big balls inside your mouth', probability: 0.1 },
-  { text: 'Verme Imundo', probability: 0.05 },
-  { text: 'Seu cu é meu', probability: 0.1 },
-  { text: 'Não.', probability: 0.15 },
-  { text: 'Lorem Impsum', probability: 0.1 },
-  { text: 'O seu inutil, vai buscar algo pra fazer', probability: 0.1 },
-  { text: 'Mesmo sendo um bot, eu tenho sentimentos, sabia?', probability: 0.1 },
-  { text: 'Mesmo sendo um mero bot totalmente Scriptado, sem nenhum tipo de inteligencia artificial, eu consigo perceber tamanha insiguinificancia em suas palavras. Você com essa busca incessante por conseguir uma misera resposta pre programda de Pong me enoja, vá lá fora ver o céu, ou sei lá falar com um amigo, ah é você não deve ter um pra estar perdendo seu precioso tempo aqui comigo seu merda, porquê você não vai pular de um prédio e eliminar essa sua existencia futil da humanidade.', probability: 0.001 },
-];
-
-var RockPaperScissors = [
-  { text: 'pedra', probability: 0.33 },
-  { text: 'papel', probability: 0.33 },
-  { text: 'tesoura', probability: 0.33 },
-  { text: 'shotgun', probability: 0.01 },
-];
-
-//// end vars ////
-
-
-//////////////////////// Function //////////////////////////
-
-function selectRandomItem(items) {
-  const random = Math.random();
-  let sum = 0;
-
-  for (const item of items) {
-    sum += item.probability;
-    if (random <= sum) {
-      return item.text;
-    }
-  }
-}
-
-////////////////////// end Function ////////////////////////
 
 const client = new discord.Client({
   intents: [
@@ -94,7 +45,7 @@ player.events.on('playerStart', (queue, track) => {
 
 player.events.on('audioTrackAdd', (queue, track) => {
 
-  const embed = new EmbedBuilder()
+  const embed = new discord.EmbedBuilder()
     .setColor('#dbffff')
     .setTitle(track.title)
     .setDescription(`**${track.title}** foi adicionado à fila!`)
@@ -113,23 +64,41 @@ player.events.on('audioTrackAdd', (queue, track) => {
 });
 
 player.events.on('audioTracksAdd', (queue, track) => {
-  queue.metadata.channel.send(`Adicionados as musicas a Fila`)
+
+  let embed = new discord.EmbedBuilder()
+    .setTitle(`Adicionando à **Playlist: ${track.title}** a Fila`)
+    .setColor('#dbffff')
+
+  queue.metadata.channel.send({ embeds: [embed] })
 });
 
 player.events.on('playerSkip', (queue, track) => {
-  queue.metadata.channel.send(`Skipando **${track.title}**`)
+  console.log('skip: ' + track.title)
 });
 
 player.events.on('disconnect', (queue) => {
-  queue.metadata.channel.send(`Me Humilharu`)
+
+  let embed = new discord.EmbedBuilder()
+    .setColor('#fff4ce')
+    .setTitle('Saindo por agora, bye bye (～￣▽￣)～')
+
+  queue.metadata.channel.send({ embeds: [embed] })
 });
 
 player.events.on('emptyChannel', (queue) => {
+
   queue.metadata.channel.send(`Me abandonaram aqui, sacanagem viu >:(`)
 });
 
 player.events.on('emptyQueue', (queue) => {
-  queue.metadata.channel.send(`Moço ( •̀ ω •́ )✧, cabou as músicas!`)
+
+
+  let embed = new discord.EmbedBuilder()
+    .setColor('#d9878d')
+    .setTitle('Moço ( •̀ ω •́ )✧, cabou as músicas!')
+
+
+  queue.metadata.channel.send({ embeds: [embed] })
 });
 
 
@@ -159,7 +128,7 @@ client.on('interactionCreate', (interaction) => {
   if (interaction.commandName === 'minigame') {
     const escolha = selectRandomItem(RockPaperScissors);
 
-    let embed = new EmbedBuilder()
+    let embed = new discord.EmbedBuilder()
       .setTitle('Resultados!')
       .setDescription(`O bot escolheu: ${escolha}`)
       .setColor('Random')
@@ -259,9 +228,9 @@ client.on('interactionCreate', (interaction) => {
         selfDeaf: true,
         volume: 80,
         leaveOnEmpty: true,
-        leaveOnEmptyCooldown: 30000,
+        leaveOnEmptyCooldown: 300000,
         leaveOnEnd: true,
-        leaveOnEndCooldown: 30000,
+        leaveOnEndCooldown: 300000,
       },
     });
 
@@ -280,7 +249,7 @@ client.on('interactionCreate', (interaction) => {
 
     queue.node.skip();
 
-    const embed = new EmbedBuilder()
+    const embed = new discord.EmbedBuilder()
       .setColor('#fff4ce')
       .setTitle('Okay! Pulando para a próxima música')
       .setDescription(`A música foi **PULADA**`)
@@ -303,7 +272,14 @@ client.on('interactionCreate', (interaction) => {
 
     if (queue.node.isPaused()) return message.channel.send('Já tá Pausado, quer que eu pause x2??')
     queue.node.pause();
-    interaction.reply('Vou pausar pra princesa =_=')
+
+    let embed = new discord.EmbedBuilder()
+      .setColor('#fff4ce')
+      .setTitle('Vou pausar pra princesa =_=')
+      .setDescription(`A música foi **PAUSADA**`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+
+    interaction.reply({ embeds: [embed] })
 
   }
 
@@ -320,7 +296,14 @@ client.on('interactionCreate', (interaction) => {
 
     if (!queue.node.isPaused()) return message.channel.send('Tu é surdo? já tá tocando seu lezado >:(')
     queue.node.resume();
-    interaction.reply('Voltando à Festa! Oh Yeah ☆*: .｡. o(≧▽≦)o .｡.:*☆')
+
+    let embed = new discord.EmbedBuilder()
+      .setColor('#dbffff')
+      .setTitle('Voltando à Festa! Oh Yeah')
+      .setDescription(`☆*: .｡. o(≧▽≦)o .｡.:*☆`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+
+    interaction.reply({ embeds: [embed] })
 
   }
 
@@ -338,7 +321,13 @@ client.on('interactionCreate', (interaction) => {
     const next = queue.tracks.data.map(x => x.title);
     const list = [...history, `> ${queue.currentTrack.title}`, ...next];
 
-    interaction.reply(`Atualmente a lista no servidor é: ${interaction.guild.name}\n${list.join('\n')}`)
+    let embed = new discord.EmbedBuilder()
+      .setColor('#dbffff')
+      .setTitle(`Atualmente a lista em ${interaction.guild.name}`)
+      .setDescription(`Lista servidor: \n${list.join('\n')}`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+
+    interaction.reply({ embeds: [embed] })
 
   }
 
@@ -352,27 +341,40 @@ client.on('interactionCreate', (interaction) => {
 
     if (!queue) return interaction.reply('A lista está vazia, BIZARRO O.O');
 
-    interaction.reply('Paro-Paro-Paro; Manual do Mundo não me processa 👌');
     queue.delete();
     queue.node.stop();
+
+    let embed = new discord.EmbedBuilder()
+      .setColor('#fff4ce')
+      .setTitle('Paro-Paro-Paro!')
+      .setDescription(`Manual do Mundo não me processa 👌`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+
+    interaction.reply({ embeds: [embed] });
   }
 
   else if (interaction.commandName === 'volume') {
-    const queue = player.queues.get(interaction.guild); 
+    const queue = player.queues.get(interaction.guild);
 
     if (!queue) {
-        return interaction.reply({ content: 'Não tem nenhum Hit no momento!', ephemeral: true });
+      return interaction.reply({ content: 'Não tem nenhum Hit no momento!', ephemeral: true });
     }
 
     const volumeVal = interaction.options.getInteger('vol');
 
     if (volumeVal === null || isNaN(volumeVal) || volumeVal < 0 || volumeVal > 100) {
-        return interaction.reply({ content: 'Por favor, forneça um valor de volume válido entre 0 a 100.', ephemeral: true });
+      return interaction.reply({ content: 'Por favor, forneça um valor de volume válido entre 0 a 100.', ephemeral: true });
     }
 
     queue.node.setVolume(volumeVal);
 
-    return interaction.reply({ content: `Volume definido para **${volumeVal}%**!`, ephemeral: true });
-}
+    let embed = new discord.EmbedBuilder()
+      .setColor('#d88588')
+      .setTitle(`Volume definido para **${volumeVal}%**!`)
+      .setDescription('Volume alterado')
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+
+    return interaction.reply({ embeds: [embed] });
+  }
 
 });

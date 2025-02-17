@@ -45,6 +45,7 @@ const command = [
                 name: 'url',
                 description: 'Direcione a URL da musica que deseja!',
                 type: ApplicationCommandOptionType.String,
+                required: true,
             },
         ],
     },
@@ -86,20 +87,38 @@ const command = [
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
 (async () => {
+
+
+    const serverIds = [
+        process.env.ID_SERVER,
+        process.env.ID_SERVER2,
+        process.env.ID_SERVER1,
+    ];
+    
     try {
 
         console.log('Started refreshing application (/) commands.');
 
-        await rest.put(
-            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.ID_SERVER),
-            { body: command },
-        )
+        for (const serverId of serverIds) {
+            if (!serverId) {
+                console.error(`Environment variable for a server ID is not set! Skipping.`);
+                continue;
+            }
 
-        console.log('Successfully reloaded application (/) commands.');
+            try {
+                await rest.put(
+                    Routes.applicationGuildCommands(process.env.CLIENT_ID, serverId),
+                    { body: command },
+                );
+                console.log(`Successfully reloaded application (/) commands for server: ${serverId}`);
+            } catch (guildError) {
+                console.error(`Failed to reload commands for server ${serverId}:`, guildError);
+            }
+        }
 
-    }
+        console.log('Finished updating commands for all servers.');
 
-    catch (error) {
-        console.log(error);
+    } catch (error) {
+        console.error('An error occurred during command registration:', error);
     }
 })();
