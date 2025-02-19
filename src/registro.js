@@ -1,5 +1,6 @@
 require('dotenv').config();
-const { REST, Routes, ApplicationCommandOptionType, Application } = require('discord.js');
+const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
+const { QueueRepeatMode } = require('discord-player')
 
 const command = [
 
@@ -81,44 +82,82 @@ const command = [
             },
         ],
     },
-];
+    {
+        name: 'loop',
+        description: 'Modos de Loop',
+        options: [
+            {
+                name: 'modo',
+                description: 'Ative/troque o Loop "state"',
+                type: ApplicationCommandOptionType.Number,
+                required: true,
+                choices: [
 
+                    {
+                        name: 'Off',
+                        value: QueueRepeatMode.OFF,
+                    },
+                    {
+                        name: 'Musica',
+                        value: QueueRepeatMode.TRACK,
+                    },
+                    {
+                        name: 'Playlist',
+                        value: QueueRepeatMode.QUEUE,
+                    },
+                    {
+                        name: 'Autoplay',
+                        value: QueueRepeatMode.AUTOPLAY,
+                    },
+                ]
+
+            }
+        ]
+
+    },
+    {
+        name: 'shuffle',
+        description: 'Deixa a fila em ordem aleatória',
+    },
+    {
+        name: 'nowplaying',
+        description: 'Mostra a musica tocando atualmente',
+    }
+
+];
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
 
-(async () => {
+function regh(servers) {
+    (async () => {
+        try {
+            console.log('Started refreshing application (/) commands.');
 
+            for (const serverId of servers) {
+                if (!serverId) {
+                    console.error(`Environment variable for a server ID is not set! Skipping.`);
+                    continue;
+                }
 
-    const serverIds = [
-        process.env.ID_SERVER,
-        process.env.ID_SERVER2,
-        process.env.ID_SERVER1,
-    ];
-    
-    try {
-
-        console.log('Started refreshing application (/) commands.');
-
-        for (const serverId of serverIds) {
-            if (!serverId) {
-                console.error(`Environment variable for a server ID is not set! Skipping.`);
-                continue;
+                try {
+                    await rest.put(
+                        Routes.applicationGuildCommands(process.env.CLIENT_ID, serverId),
+                        { body: command },
+                    );
+                    console.log(`Successfully reloaded application (/) commands for server: ${serverId}`);
+                } catch (guildError) {
+                    console.error(`Failed to reload commands for server ${serverId}:`, guildError);
+                }
             }
 
-            try {
-                await rest.put(
-                    Routes.applicationGuildCommands(process.env.CLIENT_ID, serverId),
-                    { body: command },
-                );
-                console.log(`Successfully reloaded application (/) commands for server: ${serverId}`);
-            } catch (guildError) {
-                console.error(`Failed to reload commands for server ${serverId}:`, guildError);
-            }
+            console.log('Finished updating commands for all servers.');
+
+        } catch (error) {
+            console.error('An error occurred during command registration:', error);
         }
+    })();
+}
 
-        console.log('Finished updating commands for all servers.');
 
-    } catch (error) {
-        console.error('An error occurred during command registration:', error);
-    }
-})();
+
+module.exports = regh;

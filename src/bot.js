@@ -1,11 +1,13 @@
-const { Player } = require('discord-player');
+const { Player, QueueRepeatMode, useQueue } = require('discord-player');
 const { YoutubeiExtractor } = require('discord-player-youtubei')
+const axios = require('axios');
+const regh = require('./registro.js');
 const discord = require('discord.js');
 const { RockPaperScissors, selectRandomItem, replyItems } = require('./varsFunctions.js');
 const dotenv = require('dotenv');
 dotenv.config();
-
 const login = process.env.TOKEN
+const apiKey = process.env.API_YOUTUBE;
 
 
 const client = new discord.Client({
@@ -43,7 +45,21 @@ player.events.on('playerStart', (queue, track) => {
 
 });
 
-player.events.on('audioTrackAdd', (queue, track) => {
+player.events.on('audioTrackAdd', async (queue, track) => {
+  const channelName = track.author;
+  let volume = queue.node.volume;
+
+  const searchResponse = await axios.get(
+    `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(channelName)}&type=channel&key=${apiKey}`
+  );
+
+  const channelId = await searchResponse.data.items[0].id.channelId;
+
+  const channelResponse = await axios.get(
+    `https://www.googleapis.com/youtube/v3/channels?part=snippet&id=${channelId}&key=${apiKey}`
+  );
+
+  const img = channelResponse.data.items[0].snippet.thumbnails.default.url;
 
   const embed = new discord.EmbedBuilder()
     .setColor('#dbffff')
@@ -51,28 +67,28 @@ player.events.on('audioTrackAdd', (queue, track) => {
     .setDescription(`**${track.title}** foi adicionado à fila!`)
     .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
     .setImage(track.thumbnail)
-    .setAuthor(
-      { name: track.author, iconURL: track.author.avatarURL }
-    )
     .addFields(
       { name: 'Duração', value: track.duration, inline: true },
-      { name: 'URL', value: track.url, inline: true }
+      { name: 'Volume', value: `${volume}%`, inline: true },
+      { name: 'URL', value: track.url }
     )
+    .setTimestamp()
+    .setFooter({ text: track.author, iconURL: img });
 
   queue.metadata.channel.send({ embeds: [embed] });
 
 });
 
-player.events.on('audioTracksAdd', (queue, track) => {
+player.events.on('audioTracksAdd', (queue, tracks) => {
 
   let embed = new discord.EmbedBuilder()
-    .setTitle(`Adicionando à **Playlist: ${track.title}** a Fila`)
+    .setTitle(`Adicionando à **Playlist: ${tracks.title}** a Fila`)
     .setColor('#dbffff')
 
   queue.metadata.channel.send({ embeds: [embed] })
 });
 
-player.events.on('playerSkip', (queue, track) => {
+player.events.on('playerSkip', (track) => {
   console.log('skip: ' + track.title)
 });
 
@@ -107,18 +123,25 @@ client.login(login);
 
 client.on('ready', (c) => {
   console.log(`Logged in as ${c.user.tag}!`);
-});
 
+  let servers = [];
+
+  client.guilds.cache.forEach(guild => {
+    servers.push(guild.id);
+  });
+
+
+  regh(servers);
+
+
+});
 
 
 client.on('interactionCreate', (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   ///////// Ping /////////
-
-  if (interaction.commandName === 'ping' && interaction.user.username === 'xonoxonem') {
-    interaction.reply('Mesmo sendo um mero bot totalmente Scriptado, sem nenhum tipo de inteligencia artificial, eu consigo perceber tamanha insiguinificancia em suas palavras. Você com essa busca incessante por conseguir uma misera resposta pre programda de Pong me enoja, vá lá fora ver o céu, ou sei lá falar com um amigo, ah é você não deve ter um pra estar perdendo seu precioso tempo aqui comigo seu merda, porquê você não vai pular de um prédio e eliminar essa sua existencia futil da humanidade.');
-  } else if (interaction.commandName === 'ping') {
+  if (interaction.commandName === 'ping') {
     const response = selectRandomItem(replyItems);
     interaction.reply(response);
   };
@@ -226,7 +249,7 @@ client.on('interactionCreate', (interaction) => {
           RequestedBy: interaction.user,
         },
         selfDeaf: true,
-        volume: 80,
+        volume: 100,
         leaveOnEmpty: true,
         leaveOnEmptyCooldown: 300000,
         leaveOnEnd: true,
@@ -234,7 +257,13 @@ client.on('interactionCreate', (interaction) => {
       },
     });
 
-    interaction.reply(`🔎 Procurando: **${args}**`);
+    const embed = new discord.EmbedBuilder()
+      .setColor('#fff4ce')
+      .setTitle('🔎 Procurando:')
+      .setDescription(`**${args}**`)
+
+    interaction.reply({ embeds: [embed] });
+
   }
 
   else if (interaction.commandName === 'skip') {
@@ -243,7 +272,7 @@ client.on('interactionCreate', (interaction) => {
 
     if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
 
-    const queue = player.queues.get(interaction.guild);
+    const queue = useQueue(interaction.guild);
 
     if (!queue) return interaction.reply('A lista está vazia, **BIZONHO** O.O');
 
@@ -265,9 +294,9 @@ client.on('interactionCreate', (interaction) => {
 
     if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
 
-    const queue = player.queues.get(interaction.guild);
+    const queue = useQueue(interaction.guild);
 
-    if (!queue) return interaction.reply('A lista está vazia, MEDONHO O.O');
+    if (!queue) return interaction.reply('A lista está vazia, **ASTRONOMICO FDS KKK** O.O');
 
 
     if (queue.node.isPaused()) return message.channel.send('Já tá Pausado, quer que eu pause x2??')
@@ -289,9 +318,9 @@ client.on('interactionCreate', (interaction) => {
 
     if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
 
-    const queue = player.queues.get(interaction.guild);
+    const queue = useQueue(interaction.guild);
 
-    if (!queue) return interaction.reply('A lista está vazia, MEDONHO O.O');
+    if (!queue) return interaction.reply('A lista está vazia, **MEDONHO** O.O');
 
 
     if (!queue.node.isPaused()) return message.channel.send('Tu é surdo? já tá tocando seu lezado >:(')
@@ -313,7 +342,7 @@ client.on('interactionCreate', (interaction) => {
 
     if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
 
-    const queue = player.queues.get(interaction.guild);
+    const queue = useQueue(interaction.guild);
 
     if (!queue) return interaction.reply('A lista está vazia, **BIZARRO** O.O');
 
@@ -337,9 +366,9 @@ client.on('interactionCreate', (interaction) => {
 
     if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
 
-    const queue = player.queues.get(interaction.guild);
+    const queue = useQueue(interaction.guild);
 
-    if (!queue) return interaction.reply('A lista está vazia, BIZARRO O.O');
+    if (!queue) return interaction.reply('A lista está vazia, **BIZARRO** O.O');
 
     queue.delete();
     queue.node.stop();
@@ -354,7 +383,8 @@ client.on('interactionCreate', (interaction) => {
   }
 
   else if (interaction.commandName === 'volume') {
-    const queue = player.queues.get(interaction.guild);
+
+    const queue = useQueue(interaction.guild);
 
     if (!queue) {
       return interaction.reply({ content: 'Não tem nenhum Hit no momento!', ephemeral: true });
@@ -362,8 +392,8 @@ client.on('interactionCreate', (interaction) => {
 
     const volumeVal = interaction.options.getInteger('vol');
 
-    if (volumeVal === null || isNaN(volumeVal) || volumeVal < 0 || volumeVal > 100) {
-      return interaction.reply({ content: 'Por favor, forneça um valor de volume válido entre 0 a 100.', ephemeral: true });
+    if (volumeVal === null || isNaN(volumeVal) || volumeVal < 0 || volumeVal > 500) {
+      return interaction.reply({ content: 'Por favor, forneça um valor de volume válido entre 0 a 500.', ephemeral: true });
     }
 
     queue.node.setVolume(volumeVal);
@@ -375,6 +405,81 @@ client.on('interactionCreate', (interaction) => {
       .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
 
     return interaction.reply({ embeds: [embed] });
+  }
+
+  else if (interaction.commandName == 'loop') {
+
+    const queue = useQueue(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, **AIAI KI MEDU** O.O');
+
+    const loopMode = interaction.options.getNumber('mode');
+
+    queue.setRepeatMode(loopMode);
+
+
+    const embed = new discord.EmbedBuilder()
+      .setColor('#dbffff')
+      .setTitle('Hora do Loop')
+      .setDescription(`Loop está atualmente ${QueueRepeatMode[loopMode]}`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+
+    interaction.reply({ embeds: [embed] });
+
+  }
+
+  else if (interaction.commandName == 'nowplaying') {
+
+
+    const queue = useQueue(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, **CARAMBOLAS** O.O');
+
+
+    const currentSong = queue.currentTrack;
+
+    if (!currentSong) { return interaction.reply('erro foda to com sono sei lá') }
+
+    let embed = new discord.EmbedBuilder()
+      .setColor('#dbffff')
+      .setTitle('Tocando **atualmente**:')
+      .setDescription(`**${currentSong}**`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
+
+    interaction.reply({ embeds: [embed] })
+
+  }
+
+  else if (interaction.commandName == 'shuffle') {
+
+
+    const queue = useQueue(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, CATAPIMBAS O.O');
+
+
+    if (queue.tracks.size < 2) {
+      let embed1 = new discord.EmbedBuilder()
+        .setColor('#dbffff')
+        .setTitle('Não há músicas suficientes para aleatorizar a playlist!')
+        .setDescription(`Adicina mais umas ai! （￣︶￣）↗　`)
+        .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+
+      return interaction.reply({ embeds: [embed1] });
+    }
+
+
+
+    queue.tracks.shuffle();
+
+    let embed = new discord.EmbedBuilder()
+      .setColor('#db8a8f')
+      .setTitle('Embaralhandoa Playlist')
+      .setDescription(`Aleatorizando ${queue.tracks.size} musicas. Use /queue para ver a nova playlist`)
+      .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+
+    interaction.reply({ embeds: [embed] });
+
   }
 
 });

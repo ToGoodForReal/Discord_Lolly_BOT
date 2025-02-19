@@ -14,7 +14,7 @@ var replyItems = [
   { text: 'Tá bom, tá bom eu falo Pong, Feliz???', probability: 0.05 },
   { text: 'Big balls inside your mouth', probability: 0.1 },
   { text: 'Verme Imundo', probability: 0.05 },
-  { text: 'Seu cu é meu', probability: 0.1 },
+  { text: 'Seu cu é meu', probability: 0.05 },
   { text: 'Não.', probability: 0.15 },
   { text: 'Lorem Impsum', probability: 0.1 },
   { text: 'O seu inutil, vai buscar algo pra fazer', probability: 0.1 },
@@ -30,7 +30,6 @@ var RockPaperScissors = [
 ];
 
 ////// end vars //////
-
 //////////////////////// Function //////////////////////////
 
 function selectRandomItem(items) {
