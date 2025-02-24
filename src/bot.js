@@ -79,20 +79,20 @@ player.events.on('audioTrackAdd', async (queue, track) => {
 
 });
 
-player.events.on('audioTracksAdd', (queue, tracks) => {
+player.events.on('audioTracksAdd', (queue, track) => {
 
   let embed = new discord.EmbedBuilder()
-    .setTitle(`Adicionando à **Playlist: ${tracks.title}** a Fila`)
+    .setTitle(`Adicionando à **Playlist: ${track.title}** a Fila`)
     .setColor('#dbffff')
 
   queue.metadata.channel.send({ embeds: [embed] })
 });
 
-player.events.on('playerSkip', (track) => {
+player.events.on('playerSkip', (queue, track) => {
   console.log('skip: ' + track.title)
 });
 
-player.events.on('disconnect', (queue) => {
+player.events.on('disconnect', (queue, track) => {
 
   let embed = new discord.EmbedBuilder()
     .setColor('#fff4ce')
@@ -101,12 +101,12 @@ player.events.on('disconnect', (queue) => {
   queue.metadata.channel.send({ embeds: [embed] })
 });
 
-player.events.on('emptyChannel', (queue) => {
+player.events.on('emptyChannel', (queue, track) => {
 
   queue.metadata.channel.send(`Me abandonaram aqui, sacanagem viu >:(`)
 });
 
-player.events.on('emptyQueue', (queue) => {
+player.events.on('emptyQueue', (queue,track) => {
 
 
   let embed = new discord.EmbedBuilder()
@@ -413,15 +413,33 @@ client.on('interactionCreate', (interaction) => {
 
     if (!queue) return interaction.reply('A lista está vazia, **AIAI KI MEDU** O.O');
 
-    const loopMode = interaction.options.getNumber('mode');
+    const loopMode = interaction.options.getNumber('modo');
 
     queue.setRepeatMode(loopMode);
+
+    let lop = ''
+
+    if(loopMode == 0){
+      lop = 'Desativado'
+    } 
+    
+    else if (loopMode == 1){
+      lop = 'Música'
+    }
+
+    else if (loopMode == 2){
+      lop = 'Playlist'
+    }
+
+    else if (loopMode == 3){
+      lop = 'Autoplay'
+    }
 
 
     const embed = new discord.EmbedBuilder()
       .setColor('#dbffff')
       .setTitle('Hora do Loop')
-      .setDescription(`Loop está atualmente ${QueueRepeatMode[loopMode]}`)
+      .setDescription(`Loop está atualmente ${lop}`)
       .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
 
     interaction.reply({ embeds: [embed] });
