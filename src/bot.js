@@ -1,9 +1,9 @@
-const { Player, QueueRepeatMode, useQueue } = require('discord-player');
+const { Player, useQueue } = require('discord-player');
 const { YoutubeiExtractor } = require('discord-player-youtubei')
 const axios = require('axios');
 const regh = require('./registro.js');
 const discord = require('discord.js');
-const { RockPaperScissors, selectRandomItem, replyItems } = require('./varsFunctions.js');
+const { RockPaperScissors, selectRandomItem, replyItems, Personagens } = require('./varsFunctions.js');
 const dotenv = require('dotenv');
 dotenv.config();
 const login = process.env.TOKEN
@@ -42,15 +42,22 @@ function checkQueue(interaction) {
 }
 
 // Função para criar um embed com configurações comuns
-function createEmbed(color, title, description, thumbnail) {
+function createEmbed(color, title, description, thumbnail, image) {
 
-  return new discord.EmbedBuilder()
-    .setColor(color)
-    .setTitle(title)
-    .setDescription(description)
-    .setThumbnail(thumbnail);
+  const embed = new discord.EmbedBuilder()
+    .setColor(color || '#000000')
+    .setTitle(title || '')
+    .setDescription(description || '');
 
+  if (thumbnail) {
+    embed.setThumbnail(thumbnail);
+  }
 
+  if (image) {
+    embed.setImage(image);
+  }
+
+  return embed;
 }
 
 async function adminReload() {
@@ -139,7 +146,7 @@ player.events.on('audioTrackAdd', async (queue, track) => {
 player.events.on('audioTracksAdd', (queue, track) => {
 
   let embed = new discord.EmbedBuilder()
-    .setTitle(`Adicionando à **Playlist: ${track.title}** a Fila`)
+    .setTitle(`Adicionando à **Playlist** a Fila`)
     .setColor('#dbffff')
 
   queue.metadata.channel.send({ embeds: [embed] })
@@ -440,6 +447,22 @@ client.on('interactionCreate', (interaction) => {
     interaction.reply({ embeds: [embed] });
 
   }
+
+  else if (interaction.commandName === 'character') {
+
+    console.log('Personagens:', Personagens);
+    const result = selectRandomItem(Personagens);
+    console.log('Resultado:', result);
+
+    if (!result) {
+      return interaction.reply('Ocorreu um erro ao selecionar um personagem.');
+    }
+
+    let embed = createEmbed('#dbffff', `${result.text}`, `${result.description}`, '', `${result.img}`);
+    interaction.reply({ embeds: [embed] });
+
+  };
+
 });
 
 client.on('messageCreate', (message) => {

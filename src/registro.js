@@ -38,6 +38,11 @@ const command = [
     },
 
     {
+        name: 'character',
+        description: 'Envia um Personagem aleatorio'
+    },
+
+    {
         name: 'play',
         description: 'Selecione uma música e comece a escutar!',
         required: true,
