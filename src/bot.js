@@ -359,18 +359,83 @@ client.on('interactionCreate', (interaction) => {
   }
 
   else if (interaction.commandName === 'queue') {
+    const voiceChannel = interaction.member.voice.channel;
 
-    if (!checkVoiceChannel(interaction)) return;
-    const queue = checkQueue(interaction);
-    if (!queue) return;
+    if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
 
-    const history = queue.history.tracks.data.map(x => x.title);
-    const next = queue.tracks.data.map(x => x.title);
+    const queue = useQueue(interaction.guild);
+
+    if (!queue) return interaction.reply('A lista está vazia, **BIZARRO** O.O');
+
+    // Obtém a lista de músicas
+    const history = queue.history.tracks.data.map((x, index) => `${index + 1}. ${x.title}`);
+    const next = queue.tracks.data.map((x, index) => `${history.length + index + 1}. ${x.title}`);
     const list = [...history, `> ${queue.currentTrack.title}`, ...next];
 
-    let embed = createEmbed('#dbffff', `Atualmente a lista em ${interaction.guild.name}`, `Lista servidor: \n${list.join('\n')}`, 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
+    // Define o número de músicas por página
+    const itemsPerPage = 10;
+    let currentPage = 0;
 
+    // Função para gerar o embed da página atual
+    const generateEmbed = (page) => {
+      const start = page * itemsPerPage;
+      const end = start + itemsPerPage;
+      const pageTracks = list.slice(start, end);
+
+      return new discord.EmbedBuilder()
+        .setColor('#dbffff')
+        .setTitle(`Atualmente a lista em ${interaction.guild.name}`)
+        .setDescription(`Lista servidor: \n${pageTracks.join('\n')}`)
+        .setFooter({ text: `Página ${page + 1} de ${Math.ceil(list.length / itemsPerPage)}` })
+        .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+    };
+
+    // Cria os botões de navegação
+    const row = new discord.ActionRowBuilder().addComponents(
+      new discord.ButtonBuilder()
+        .setCustomId('previous')
+        .setLabel('Anterior')
+        .setStyle(discord.ButtonStyle.Primary)
+        .setDisabled(currentPage === 0), // Desabilita o botão "Anterior" na primeira página
+      new discord.ButtonBuilder()
+        .setCustomId('next')
+        .setLabel('Próxima')
+        .setStyle(discord.ButtonStyle.Primary)
+        .setDisabled((currentPage + 1) * itemsPerPage >= list.length) // Desabilita o botão "Próxima" na última página
+    );
+
+    // Envia a mensagem com a primeira página e os botões
+    interaction.reply({
+      embeds: [generateEmbed(currentPage)],
+      components: [row],
+    });
+
+    // Cria um coletor de interações para os botões
+    const filter = (i) => i.user.id === interaction.user.id;
+    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
+
+    collector.on('collect', async (i) => {
+      if (i.customId === 'previous') {
+        currentPage--;
+      } else if (i.customId === 'next') {
+        currentPage++;
+      }
+
+      // Atualiza os botões
+      row.components[0].setDisabled(currentPage === 0);
+      row.components[1].setDisabled((currentPage + 1) * itemsPerPage >= list.length);
+
+      // Atualiza a mensagem com a nova página
+      await i.update({
+        embeds: [generateEmbed(currentPage)],
+        components: [row],
+      });
+    });
+
+    collector.on('end', () => {
+      // Remove os botões após o tempo expirar
+      interaction.editReply({ components: [] });
+    });
   }
 
   else if (interaction.commandName === 'stop') {
@@ -461,7 +526,20 @@ client.on('interactionCreate', (interaction) => {
     let embed = createEmbed('#dbffff', `${result.text}`, `${result.description}`, '', `${result.img}`);
     interaction.reply({ embeds: [embed] });
 
-  };
+  }
+
+  else if (interaction.commandName === 'clear') {
+
+    if (!checkVoiceChannel(interaction)) return;
+    const queue = checkQueue(interaction);
+    if (!queue) return;
+
+    queue.delete();
+
+    let embed = createEmbed('#fff4ce', 'Playslist Limpa!', 'Pode começar uma nova playlist do zero 👌', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+    interaction.reply({ embeds: [embed] });
+
+  }
 
 });
 

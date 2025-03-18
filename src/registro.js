@@ -127,7 +127,11 @@ const command = [
     {
         name: 'nowplaying',
         description: 'Mostra a musica tocando atualmente',
-    }
+    },
+    {
+        name: 'clear',
+        description: 'Limpa a Playlist atual, deixando-a zerada',
+    },
 
 ];
 
