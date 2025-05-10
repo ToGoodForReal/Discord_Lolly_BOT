@@ -132,6 +132,10 @@ const command = [
         name: 'clear',
         description: 'Limpa a Playlist atual, deixando-a zerada',
     },
+    {
+        name: 'invite',
+        description: 'Fornece o link para convidar este bot para outros servidores.',
+    },
 
 ];
 

@@ -3,11 +3,41 @@ const { YoutubeiExtractor } = require('discord-player-youtubei')
 const axios = require('axios');
 const regh = require('./registro.js');
 const discord = require('discord.js');
-const { RockPaperScissors, selectRandomItem, replyItems, Personagens } = require('./varsFunctions.js');
+const { RockPaperScissors, selectRandomItem, replyItems, Personagens, createEmbed } = require('./varsFunctions.js');
 const dotenv = require('dotenv');
 dotenv.config();
 const login = process.env.TOKEN
 const apiKey = process.env.API_YOUTUBE;
+
+
+//Import Comandos
+
+const clearCommand = require('./comandos/clear.js');
+const inviteCommand = require('./comandos/invite.js');
+const loopCommand = require('./comandos/loop.js');
+const nowplayingCommand = require('./comandos/nowplaying.js');
+const pauseCommand = require('./comandos/pause.js');
+const playCommand = require('./comandos/play.js');
+const queueCommand =  require('./comandos/queue.js');
+const resumeCommand = require('./comandos/resume.js');
+const shuffleCommand = require('./comandos/shuffle.js');
+const skipCommand = require('./comandos/skip.js');
+const stopCommand = require('./comandos/stop.js');
+const volumeCommand = require('./comandos/volume.js');
+
+const commands = new Map();
+commands.set(inviteCommand.name, inviteCommand);
+commands.set(playCommand.name, playCommand);
+commands.set(skipCommand.name, skipCommand);
+commands.set(stopCommand.name, stopCommand);
+commands.set(pauseCommand.name, pauseCommand);
+commands.set(resumeCommand.name, resumeCommand);
+commands.set(shuffleCommand.name, shuffleCommand);
+commands.set(volumeCommand.name, volumeCommand);
+commands.set(queueCommand.name, queueCommand);
+commands.set(nowplayingCommand.name, nowplayingCommand);
+commands.set(loopCommand.name, loopCommand);
+commands.set(clearCommand.name, clearCommand);
 
 ////// Functions //////
 // Função para verificar se o usuário está em um canal de voz
@@ -39,25 +69,6 @@ function checkQueue(interaction) {
 
   return queue;
 
-}
-
-// Função para criar um embed com configurações comuns
-function createEmbed(color, title, description, thumbnail, image) {
-
-  const embed = new discord.EmbedBuilder()
-    .setColor(color || '#000000')
-    .setTitle(title || '')
-    .setDescription(description || '');
-
-  if (thumbnail) {
-    embed.setThumbnail(thumbnail);
-  }
-
-  if (image) {
-    embed.setImage(image);
-  }
-
-  return embed;
 }
 
 async function adminReload() {
@@ -146,7 +157,7 @@ player.events.on('audioTrackAdd', async (queue, track) => {
 player.events.on('audioTracksAdd', (queue, track) => {
 
   let embed = new discord.EmbedBuilder()
-    .setTitle(`Adicionando à **Playlist** a Fila`)
+    .setTitle(`Adicionando à **Playlist** algumas faixas`)
     .setColor('#dbffff')
 
   queue.metadata.channel.send({ embeds: [embed] })
@@ -181,6 +192,18 @@ player.events.on('emptyQueue', (queue, track) => {
   queue.metadata.channel.send({ embeds: [embed] })
 });
 
+player.events.on('error', (queue, error) => {
+  // Emitted when the player queue encounters error
+  console.log(`General player error event: ${error.message}`);
+  console.log(error);
+});
+
+player.events.on('playerError', (queue, error) => {
+  // Emitted when the audio player errors while streaming audio track
+  console.log(`Player error event: ${error.message}`);
+  console.log(error);
+});
+
 
 client.on('ready', (c) => {
   console.log(`Logged in as ${c.user.tag}!`);
@@ -190,8 +213,9 @@ client.on('ready', (c) => {
 });
 
 
-client.on('interactionCreate', (interaction) => {
+client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
+  if (!interaction.isCommand()) return;
 
   ///////// Ping /////////
   if (interaction.commandName === 'ping') {
@@ -284,236 +308,64 @@ client.on('interactionCreate', (interaction) => {
 
   ///// Music /////
 
-  if (interaction.commandName === 'play') {
-
-    if (!checkVoiceChannel(interaction)) return;
-
-    let args = interaction.options.getString('url');
-    if (!args) return interaction.reply('Me de algo para buscar!!');
-
-    player.play(interaction.member.voice.channel, args, {
-      nodeOptions: {
-        metadata: {
-          channel: interaction.channel,
-          client: interaction.guild.members.me,
-          RequestedBy: interaction.user,
-        },
-        selfDeaf: true,
-        volume: 100,
-        leaveOnEmpty: true,
-        leaveOnEmptyCooldown: 300000,
-        leaveOnEnd: true,
-        leaveOnEndCooldown: 300000,
-      },
-    });
-
-    let embed = createEmbed('#fff4ce', '🔎 Procurando:', `**${args}**`, null);
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'skip') {
-
-    if (!checkVoiceChannel(interaction)) return;
-
-    const queue = checkQueue(interaction);
-    if (!queue) return;
-
-    queue.node.skip();
-    let embed = createEmbed('#fff4ce', 'Okay! Pulando para a próxima música', 'A música foi **PULADA**', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'pause') {
-
-    if (!checkVoiceChannel(interaction)) return;
-
-    const queue = checkQueue(interaction);
-
-    if (!queue) return;
-
-    let embedPause = createEmbed('#d88588', 'À música já está pausada!', 'A não ser que sei lá, você queira que eu pare 2x')
-    if (queue.node.isPaused()) return interaction.reply({ embed: [embedPause] });
-
-    queue.node.pause();
-
-    let embed = createEmbed('#fff4ce', 'Vou pausar pra princesa =_=', 'A música foi **PAUSADA**', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'resume') {
-
-    if (!checkVoiceChannel(interaction)) return;
-    const queue = checkQueue(interaction);
-    if (!queue) return;
-
-    let embedResume = createEmbed('#d88588', 'Eu não sou Adivinha', 'Mas acho que já está tocando!')
-    if (!queue.node.isPaused()) return interaction.reply({ embeds: [embedResume] });
-    queue.node.resume();
-
-    let embed = createEmbed('#dbffff', 'Voltando à Festa! Oh Yeah', '☆*: .｡. o(≧▽≦)o .｡.:*☆', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'queue') {
-    const voiceChannel = interaction.member.voice.channel;
-
-    if (!voiceChannel) return interaction.reply('Nem num canal de voz tu tá, vou parar oque? (* ￣︿￣)');
-
-    const queue = useQueue(interaction.guild);
-
-    if (!queue) return interaction.reply('A lista está vazia, **BIZARRO** O.O');
-
-    // Obtém a lista de músicas
-    const history = queue.history.tracks.data.map((x, index) => `${index + 1}. ${x.title}`);
-    const next = queue.tracks.data.map((x, index) => `${history.length + index + 1}. ${x.title}`);
-    const list = [...history, `> ${queue.currentTrack.title}`, ...next];
-
-    // Define o número de músicas por página
-    const itemsPerPage = 10;
-    let currentPage = 0;
-
-    // Função para gerar o embed da página atual
-    const generateEmbed = (page) => {
-      const start = page * itemsPerPage;
-      const end = start + itemsPerPage;
-      const pageTracks = list.slice(start, end);
-
-      return new discord.EmbedBuilder()
-        .setColor('#dbffff')
-        .setTitle(`Atualmente a lista em ${interaction.guild.name}`)
-        .setDescription(`Lista servidor: \n${pageTracks.join('\n')}`)
-        .setFooter({ text: `Página ${page + 1} de ${Math.ceil(list.length / itemsPerPage)}` })
-        .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    };
-
-    // Cria os botões de navegação
-    const row = new discord.ActionRowBuilder().addComponents(
-      new discord.ButtonBuilder()
-        .setCustomId('previous')
-        .setLabel('Anterior')
-        .setStyle(discord.ButtonStyle.Primary)
-        .setDisabled(currentPage === 0), // Desabilita o botão "Anterior" na primeira página
-      new discord.ButtonBuilder()
-        .setCustomId('next')
-        .setLabel('Próxima')
-        .setStyle(discord.ButtonStyle.Primary)
-        .setDisabled((currentPage + 1) * itemsPerPage >= list.length) // Desabilita o botão "Próxima" na última página
-    );
-
-    // Envia a mensagem com a primeira página e os botões
-    interaction.reply({
-      embeds: [generateEmbed(currentPage)],
-      components: [row],
-    });
-
-    // Cria um coletor de interações para os botões
-    const filter = (i) => i.user.id === interaction.user.id;
-    const collector = interaction.channel.createMessageComponentCollector({ filter, time: 60000 });
-
-    collector.on('collect', async (i) => {
-      if (i.customId === 'previous') {
-        currentPage--;
-      } else if (i.customId === 'next') {
-        currentPage++;
-      }
-
-      // Atualiza os botões
-      row.components[0].setDisabled(currentPage === 0);
-      row.components[1].setDisabled((currentPage + 1) * itemsPerPage >= list.length);
-
-      // Atualiza a mensagem com a nova página
-      await i.update({
-        embeds: [generateEmbed(currentPage)],
-        components: [row],
-      });
-    });
-
-    collector.on('end', () => {
-      // Remove os botões após o tempo expirar
-      interaction.editReply({ components: [] });
-    });
-  }
-
-  else if (interaction.commandName === 'stop') {
-
-    if (!checkVoiceChannel(interaction)) return;
-    const queue = checkQueue(interaction);
-    if (!queue) return;
-
-    queue.delete();
-    queue.node.stop();
-
-    let embed = createEmbed('#fff4ce', 'Paro-Paro-Paro!', 'Manual do Mundo não me processa 👌', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'volume') {
-
-    const queue = useQueue(interaction.guild);
-    if (!queue) return interaction.reply({ content: 'Não tem nenhum Hit no momento!', ephemeral: true });
-
-    const volumeVal = interaction.options.getInteger('vol');
-    if (volumeVal === null || isNaN(volumeVal) || volumeVal < 0 || volumeVal > 500) {
-      return interaction.reply({ content: 'Por favor, forneça um valor de volume válido entre 0 a 500.', ephemeral: true });
-    }
-
-    queue.node.setVolume(volumeVal);
-    let embed = createEmbed('#d88588', `Volume definido para **${volumeVal}%**!`, 'Volume alterado', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    return interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'loop') {
-
-    const queue = checkQueue(interaction);
-    if (!queue) return;
-
-    const loopMode = interaction.options.getNumber('modo');
-    queue.setRepeatMode(loopMode);
-
-    const loopModes = ['Desativado', 'Música', 'Playlist', 'Autoplay'];
-    const lop = loopModes[loopMode] || 'Desconhecido';
-
-    let embed = createEmbed('#dbffff', 'Hora do Loop', `Loop está atualmente ${lop}`, 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'nowplaying') {
-
-    const queue = checkQueue(interaction);
-    if (!queue) return;
-
-    const currentSong = queue.currentTrack;
-    if (!currentSong) return interaction.reply('Erro em alguma coisa,  sei lá');
-
-    let embed = createEmbed('#dbffff', 'Tocando **atualmente**:', `**${currentSong}**`, 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'shuffle') {
-
-    const queue = checkQueue(interaction);
-    if (!queue) return;
-
-    if (queue.tracks.size < 2) {
-      let embed = createEmbed('#dbffff', 'Não há músicas suficientes para aleatorizar a playlist!', 'Adicina mais umas ai! （￣︶￣）↗　', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-      return interaction.reply({ embeds: [embed] });
-    }
-
-    queue.tracks.shuffle();
-    let embed = createEmbed('#db8a8f', 'Embaralhandoa Playlist', `Aleatorizando ${queue.tracks.size} musicas. Use /queue para ver a nova playlist`, 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'character') {
+  const commandName = interaction.commandName;
+
+  switch (commandName) {
+
+    case 'invite':
+      await commands.get('invite').execute(interaction);
+      break;
+
+    case 'play':
+      await commands.get('play').execute(interaction, player, checkVoiceChannel, createEmbed);
+      break;
+
+    case 'skip':
+      await commands.get('skip').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
+      break;
+
+    case 'queue':
+      await commands.get('queue').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
+      break;
+    
+    case 'stop':
+      await commands.get('stop').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
+      break;
+
+    case 'pause':
+      await commands.get('pause').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
+      break;
+
+    case 'resume':
+      await commands.get('resume').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
+      break;
+
+    case 'volume':
+      await commands.get('volume').execute(interaction, checkQueue, createEmbed);
+      break;
+
+    case 'shuffle':
+      await commands.get('shuffle').execute(interaction, checkQueue, createEmbed);
+      break;
+
+    case 'nowplaying':
+      await commands.get('nowplaying').execute(interaction, checkQueue, createEmbed);
+      break;
+
+    case 'loop':
+      await commands.get('loop').execute(interaction, checkQueue, createEmbed);
+      break;
+
+    case 'clear':
+      await commands.get('clear').execute(interaction, checkQueue, checkVoiceChannel, createEmbed);
+      break;
+
+    default:
+      console.log('Ouve um erro, opção nao especificada.')
+      break;
+  };
+
+  if (interaction.commandName === 'character') {
 
     console.log('Personagens:', Personagens);
     const result = selectRandomItem(Personagens);
@@ -524,19 +376,6 @@ client.on('interactionCreate', (interaction) => {
     }
 
     let embed = createEmbed('#dbffff', `${result.text}`, `${result.description}`, '', `${result.img}`);
-    interaction.reply({ embeds: [embed] });
-
-  }
-
-  else if (interaction.commandName === 'clear') {
-
-    if (!checkVoiceChannel(interaction)) return;
-    const queue = checkQueue(interaction);
-    if (!queue) return;
-
-    queue.delete();
-
-    let embed = createEmbed('#fff4ce', 'Playslist Limpa!', 'Pode começar uma nova playlist do zero 👌', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
     interaction.reply({ embeds: [embed] });
 
   }
