@@ -9,7 +9,7 @@ module.exports = {
         
         queue.delete();
         
-        let embed = createEmbed('#fff4ce', 'Playslist Limpa!', 'Pode começar uma nova playlist do zero 👌', './image/cell.jpg');
+        let embed = createEmbed('#fff4ce', 'Playslist Limpa!', 'Pode começar uma nova playlist do zero 👌', 'https://drive.google.com/u/1/drive-viewer/AKGpihYNrCFSd2oVwo2JYD5WeF4AYEDIMTfhMCujWYu7udq2Q0vkmeaUPN1NGEbHDYPVZ0tbqkxtfCSXn0KPtjnALQgETgxfpUk4BQ=s2560');
         interaction.reply({ embeds: [embed] });
 
     }

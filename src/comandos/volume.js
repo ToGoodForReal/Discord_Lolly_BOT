@@ -6,7 +6,11 @@ module.exports = {
         const queue = checkQueue(interaction);
         const volumeVal = interaction.options.getInteger('vol');
 
-        if (!queue) return interaction.reply({ content: 'Não tem nenhum Hit no momento!', ephemeral: true });
+        if (!queue) {
+
+            return interaction.reply({ content: 'A lista está vazia, **BIZONHO** O.O', ephemeral: true });
+
+        }
 
         if (volumeVal === null || isNaN(volumeVal) || volumeVal < 0 || volumeVal > 500) {
 
@@ -14,12 +18,20 @@ module.exports = {
 
         } else {
 
-            queue.node.setVolume(volumeVal);
+            try {
 
-            let embed = createEmbed('#d88588', `Volume definido para **${volumeVal}%**!`, 'Volume alterado', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
-            return interaction.reply({ embeds: [embed] });
+                await queue.node.setVolume(volumeVal);
+                let embed = createEmbed('#d88588', `Volume definido para **${volumeVal}%**!`, 'Volume alterado', 'https://drive.google.com/file/d/13-kPbdrda50KswtXVAQZo05VBWmY4hcw/view?usp=sharing');
+                await interaction.reply({ embeds: [embed] });
+                return volumeVal;
 
-        };
+            } catch (error) {
 
+                console.error("Erro ao definir o volume:", error);
+                await interaction.reply({ content: 'Ocorreu um erro ao tentar definir o volume.', ephemeral: true });
+                return null; // Ou algum indicativo de erro
+                
+            }
+        }
     }
 };

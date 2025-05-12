@@ -5,20 +5,23 @@ const regh = require('./registro.js');
 const discord = require('discord.js');
 const { RockPaperScissors, selectRandomItem, replyItems, Personagens, createEmbed } = require('./varsFunctions.js');
 const dotenv = require('dotenv');
+const login = process.env.TOKEN, apiKey = process.env.API_YOUTUBE;
+let volume1 = 100;
 dotenv.config();
-const login = process.env.TOKEN
-const apiKey = process.env.API_YOUTUBE;
 
 
 //Import Comandos
 
+const characterCommand = require('./comandos/character.js');
 const clearCommand = require('./comandos/clear.js');
 const inviteCommand = require('./comandos/invite.js');
 const loopCommand = require('./comandos/loop.js');
+const minigameCommand = require('./comandos/minigame.js');
 const nowplayingCommand = require('./comandos/nowplaying.js');
 const pauseCommand = require('./comandos/pause.js');
+const pingCommand = require('./comandos/ping.js')
 const playCommand = require('./comandos/play.js');
-const queueCommand =  require('./comandos/queue.js');
+const queueCommand = require('./comandos/queue.js');
 const resumeCommand = require('./comandos/resume.js');
 const shuffleCommand = require('./comandos/shuffle.js');
 const skipCommand = require('./comandos/skip.js');
@@ -26,20 +29,24 @@ const stopCommand = require('./comandos/stop.js');
 const volumeCommand = require('./comandos/volume.js');
 
 const commands = new Map();
+commands.set(characterCommand.name, characterCommand);
+commands.set(clearCommand.name, clearCommand);
 commands.set(inviteCommand.name, inviteCommand);
-commands.set(playCommand.name, playCommand);
-commands.set(skipCommand.name, skipCommand);
-commands.set(stopCommand.name, stopCommand);
+commands.set(loopCommand.name, loopCommand);
+commands.set(minigameCommand.name, minigameCommand);
+commands.set(nowplayingCommand.name, nowplayingCommand);
 commands.set(pauseCommand.name, pauseCommand);
+commands.set(pingCommand.name, pingCommand);
+commands.set(playCommand.name, playCommand);
+commands.set(queueCommand.name, queueCommand);
 commands.set(resumeCommand.name, resumeCommand);
 commands.set(shuffleCommand.name, shuffleCommand);
+commands.set(skipCommand.name, skipCommand);
+commands.set(stopCommand.name, stopCommand);
 commands.set(volumeCommand.name, volumeCommand);
-commands.set(queueCommand.name, queueCommand);
-commands.set(nowplayingCommand.name, nowplayingCommand);
-commands.set(loopCommand.name, loopCommand);
-commands.set(clearCommand.name, clearCommand);
 
 ////// Functions //////
+
 // Função para verificar se o usuário está em um canal de voz
 function checkVoiceChannel(interaction) {
 
@@ -47,7 +54,6 @@ function checkVoiceChannel(interaction) {
 
   if (!voiceChannel) {
 
-    interaction.reply('Você precisa estar em uma call primeiro bobinho ╰(*°▽°*)╯');
     return false;
 
   }
@@ -62,7 +68,6 @@ function checkQueue(interaction) {
 
   if (!queue) {
 
-    interaction.reply('A lista está vazia, **BIZONHO** O.O');
     return false;
 
   }
@@ -104,15 +109,25 @@ const client = new discord.Client({
 });
 
 const player = new Player(client, {
-  ytdlOptions: {
+  ytdlOptions: { // Estas são opções padrão para ytdl-core, se usado diretamente
     quality: "highestaudio",
-    highWaterMark: 1 << 25
-  }
+    highWaterMark: 1 << 25,
+    dlChunkSize: 0,
+    filter: "audioonly",
+    requestOptions: { // requestOptions é específico para ytdl-core para passar headers etc.
+      headers: {
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
+        "accept": "*/*",
+        "accept-encoding": "gzip, deflate, br"
+      }
+    }
+  },
+  useLegacyFFmpeg: true // Isso pode ou não ser necessário, dependendo da sua versão do FFmpeg
 });
 
-player.extractors.register(YoutubeiExtractor).then(() => {
-  console.log('Extractor Carregado');
-}).catch((e) => console.log(e));
+player.extractors.register(YoutubeiExtractor).then(() => { // Removido o { Cookie: process.env.YOUTUBE_COOKIE } a menos que você realmente precise e tenha configurado
+  console.log('Extractor Youtubei Carregado');
+}).catch((e) => console.log('Erro ao carregar YoutubeiExtractor:', e));
 
 player.events.on('playerStart', (queue, track) => {
 
@@ -136,17 +151,12 @@ player.events.on('audioTrackAdd', async (queue, track) => {
 
   const img = channelResponse.data.items[0].snippet.thumbnails.default.url;
 
-  let embed = new discord.EmbedBuilder()
-    .setColor('#dbffff')
-    .setTitle(track.title)
-    .setDescription(`**${track.title}** foi adicionado à fila!`)
-    .setThumbnail('https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg')
-    .setImage(track.thumbnail)
-    .addFields(
-      { name: 'Duração', value: track.duration, inline: true },
-      { name: 'Volume', value: `${volume}%`, inline: true },
-      { name: 'URL', value: track.url }
-    )
+  let embed = createEmbed('#dbffff', track.title, `**${track.title}** foi adicionado à fila!`, 'https://drive.google.com/u/1/drive-viewer/AKGpihYNrCFSd2oVwo2JYD5WeF4AYEDIMTfhMCujWYu7udq2Q0vkmeaUPN1NGEbHDYPVZ0tbqkxtfCSXn0KPtjnALQgETgxfpUk4BQ=s2560', track.thumbnail);
+  embed.addFields(
+    { name: 'Duração', value: track.duration, inline: true },
+    { name: 'Volume', value: `${volume}%`, inline: true },
+    { name: 'URL', value: track.url }
+  )
     .setTimestamp()
     .setFooter({ text: track.author, iconURL: img });
 
@@ -214,101 +224,11 @@ client.on('ready', (c) => {
 
 
 client.on('interactionCreate', async (interaction) => {
+
   if (!interaction.isChatInputCommand()) return;
   if (!interaction.isCommand()) return;
 
-  ///////// Ping /////////
-  if (interaction.commandName === 'ping') {
-    const response = selectRandomItem(replyItems);
-    interaction.reply(response);
-  };
-
-  /////// Minigame ///////
-
-  if (interaction.commandName === 'minigame') {
-    const escolha = selectRandomItem(RockPaperScissors);
-
-    let embed = new discord.EmbedBuilder()
-      .setTitle('Resultados!')
-      .setDescription(`O bot escolheu: ${escolha}`)
-      .setColor('Random')
-      .setThumbnail('https://goglobalways.com/wp-content/uploads/2023/03/Rock-Scissors-Game.png');
-
-    if (interaction.options.getString('jogada_usuario') === 'pedra') {
-      embed.addFields(
-        { name: 'Sua jogada:', value: 'Pedra' },
-      );
-      if (escolha === 'pedra') {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Empate!' },
-        );
-      } else if (escolha === 'papel') {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Eu Venci! >:)' },
-        );
-      } else if (escolha === 'shotgun') {
-        embed.addFields(
-          { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
-        );
-      } else {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Eu perdi... :(' },
-        );
-      }
-    } else if (interaction.options.getString('jogada_usuario') === 'papel') {
-      embed.addFields(
-        { name: 'Sua jogada:', value: 'Papel' },
-      );
-      if (escolha === 'pedra') {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Você Venceu! :(' },
-        );
-      } else if (escolha === 'papel') {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Empate!' },
-        );
-      } else if (escolha === 'shotgun') {
-        embed.addFields(
-          { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
-        );
-      } else {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Eu Venci! >:)' },
-        );
-      }
-    } else if (interaction.options.getString('jogada_usuario') === 'tesoura') {
-      embed.addFields(
-        { name: 'Sua jogada:', value: 'Tesoura' },
-      );
-      if (escolha === 'pedra') {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Eu Venci! >:)' },
-        );
-      } else if (escolha === 'papel') {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Você Venceu! :(' },
-        );
-      } else if (escolha === 'shotgun') {
-        embed.addFields(
-          { name: 'Resultado:', value: `Eu Venci! (●'◡'●)` },
-        );
-      } else {
-        embed.addFields(
-          { name: 'Resultado:', value: 'Empate!' },
-        );
-      }
-    } else {
-      embed.addFields(
-        { name: 'Resultado:', value: 'Jogada inválida.' },
-      );
-    }
-
-    interaction.reply({ embeds: [embed] });
-  };
-
-  ///// Music /////
-
-  const commandName = interaction.commandName;
+  const commandName = await interaction.commandName;
 
   switch (commandName) {
 
@@ -317,7 +237,7 @@ client.on('interactionCreate', async (interaction) => {
       break;
 
     case 'play':
-      await commands.get('play').execute(interaction, player, checkVoiceChannel, createEmbed);
+      await commands.get('play').execute(interaction, player, checkVoiceChannel, createEmbed, volume1);
       break;
 
     case 'skip':
@@ -327,7 +247,7 @@ client.on('interactionCreate', async (interaction) => {
     case 'queue':
       await commands.get('queue').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
       break;
-    
+
     case 'stop':
       await commands.get('stop').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
       break;
@@ -341,7 +261,10 @@ client.on('interactionCreate', async (interaction) => {
       break;
 
     case 'volume':
-      await commands.get('volume').execute(interaction, checkQueue, createEmbed);
+      const novoVolume = await commands.get('volume').execute(interaction, checkQueue, createEmbed);
+      if (typeof novoVolume === 'number') {
+        volume1 = novoVolume;
+      }
       break;
 
     case 'shuffle':
@@ -360,25 +283,22 @@ client.on('interactionCreate', async (interaction) => {
       await commands.get('clear').execute(interaction, checkQueue, checkVoiceChannel, createEmbed);
       break;
 
+    case 'character':
+      await commands.get('character').execute(interaction, Personagens, createEmbed);
+      break;
+
+    case 'ping':
+      await commands.get('ping').execute(interaction, replyItems);
+      break;
+
+    case 'minigame':
+      await commands.get('minigame').execute(interaction, selectRandomItem, RockPaperScissors, createEmbed);
+      break;
+
     default:
       console.log('Ouve um erro, opção nao especificada.')
       break;
   };
-
-  if (interaction.commandName === 'character') {
-
-    console.log('Personagens:', Personagens);
-    const result = selectRandomItem(Personagens);
-    console.log('Resultado:', result);
-
-    if (!result) {
-      return interaction.reply('Ocorreu um erro ao selecionar um personagem.');
-    }
-
-    let embed = createEmbed('#dbffff', `${result.text}`, `${result.description}`, '', `${result.img}`);
-    interaction.reply({ embeds: [embed] });
-
-  }
 
 });
 
@@ -389,7 +309,7 @@ client.on('messageCreate', (message) => {
     if (message.author = !admin) {
       message.reply({ content: `${message.author} Você não tem permissão para realizar um reload!`, ephemeral: true })
     } else {
-      message.reply({ content: `Bem vindo ${message.author}!, Iniciando Reload: Application **RESET** for **ALL SERVERS**\nReload Solicitado em ${message.channel}, ${message.guild}`, ephemeral: true })
+      message.reply({ content: `Bem vindo ${message.id}!, Iniciando Reload: Application **RESET** for **ALL SERVERS**\nReload Solicitado em ${message.channel}, ${message.guild}`, ephemeral: true })
       adminReload()
     }
   }

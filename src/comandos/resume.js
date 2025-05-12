@@ -14,7 +14,7 @@ module.exports = {
     
                 queue.node.resume();
     
-                let embed = createEmbed('#dbffff', 'Voltando à Festa! Oh Yeah', '☆*: .｡. o(≧▽≦)o .｡.:*☆', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+                let embed = createEmbed('#dbffff', 'Voltando à Festa! Oh Yeah', '☆*: .｡. o(≧▽≦)o .｡.:*☆', 'https://drive.google.com/u/1/drive-viewer/AKGpihYNrCFSd2oVwo2JYD5WeF4AYEDIMTfhMCujWYu7udq2Q0vkmeaUPN1NGEbHDYPVZ0tbqkxtfCSXn0KPtjnALQgETgxfpUk4BQ=s2560');
                 interaction.reply({ embeds: [embed] });
                 
             } else {

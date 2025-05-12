@@ -12,7 +12,7 @@ module.exports = {
 
             queue.node.skip();
 
-            let embed = createEmbed('#fff4ce', 'Okay! Pulando para a próxima música', 'A música foi **PULADA**', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+            let embed = createEmbed('#fff4ce', 'Okay! Pulando para a próxima música', 'A música foi **PULADA**', 'https://drive.google.com/u/1/drive-viewer/AKGpihYNrCFSd2oVwo2JYD5WeF4AYEDIMTfhMCujWYu7udq2Q0vkmeaUPN1NGEbHDYPVZ0tbqkxtfCSXn0KPtjnALQgETgxfpUk4BQ=s2560');
             interaction.reply({ embeds: [embed] });
 
         } catch (error) {

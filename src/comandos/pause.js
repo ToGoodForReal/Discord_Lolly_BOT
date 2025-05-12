@@ -15,7 +15,7 @@ module.exports = {
                 return await interaction.reply({ embeds: [embedPause] });
             } else {
                 queue.node.pause();
-                let embed = createEmbed('#fff4ce', 'Vou pausar pra princesa =_=', 'A música foi **PAUSADA**', 'https://avatarfiles.alphacoders.com/206/thumb-1920-206638.jpg');
+                let embed = createEmbed('#fff4ce', 'Vou pausar pra princesa =_=', 'A música foi **PAUSADA**', 'https://drive.google.com/u/1/drive-viewer/AKGpihYNrCFSd2oVwo2JYD5WeF4AYEDIMTfhMCujWYu7udq2Q0vkmeaUPN1NGEbHDYPVZ0tbqkxtfCSXn0KPtjnALQgETgxfpUk4BQ=s2560');
                 return await interaction.reply({ embeds: [embed] });
             }
 
