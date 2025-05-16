@@ -108,22 +108,7 @@ const client = new discord.Client({
   ],
 });
 
-const player = new Player(client, {
-  ytdlOptions: { // Estas são opções padrão para ytdl-core, se usado diretamente
-    quality: "highestaudio",
-    highWaterMark: 1 << 25,
-    dlChunkSize: 0,
-    filter: "audioonly",
-    requestOptions: { // requestOptions é específico para ytdl-core para passar headers etc.
-      headers: {
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36",
-        "accept": "*/*",
-        "accept-encoding": "gzip, deflate, br"
-      }
-    }
-  },
-  useLegacyFFmpeg: true // Isso pode ou não ser necessário, dependendo da sua versão do FFmpeg
-});
+const player = new Player(client);
 
 player.extractors.register(YoutubeiExtractor).then(() => { // Removido o { Cookie: process.env.YOUTUBE_COOKIE } a menos que você realmente precise e tenha configurado
   console.log('Extractor Youtubei Carregado');

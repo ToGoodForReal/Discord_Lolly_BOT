@@ -71,10 +71,14 @@ module.exports = {
                 });
             });
 
-            collector.on('end', () => {
-                // Remove os botões após o tempo expirar
-                interaction.editReply({ components: [] });
+            collector.on('end', async () => {
+                try {
+                    await interaction.editReply({ components: [] });
+                } catch (error) {
+                    console.warn('Não foi possível editar a mensagem (pode ter sido excluída ou expirada):', error.message);
+                }
             });
+
 
         } catch (error) {
             console.log(`Erro codigo queue: ${error}`);
