@@ -47,7 +47,6 @@ commands.set(volumeCommand.name, volumeCommand);
 
 ////// Functions //////
 
-// Função para verificar se o usuário está em um canal de voz
 function checkVoiceChannel(interaction) {
 
   const voiceChannel = interaction.member.voice.channel;
@@ -61,7 +60,6 @@ function checkVoiceChannel(interaction) {
   return true;
 }
 
-// Função para verificar se há uma fila de músicas
 function checkQueue(interaction) {
 
   const queue = useQueue(interaction.guild);
@@ -110,7 +108,7 @@ const client = new discord.Client({
 
 const player = new Player(client);
 
-player.extractors.register(YoutubeiExtractor).then(() => { // Removido o { Cookie: process.env.YOUTUBE_COOKIE } a menos que você realmente precise e tenha configurado
+player.extractors.register(YoutubeiExtractor).then(() => {
   console.log('Extractor Youtubei Carregado');
 }).catch((e) => console.log('Erro ao carregar YoutubeiExtractor:', e));
 
