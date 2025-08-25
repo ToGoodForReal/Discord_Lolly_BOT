@@ -1,18 +1,33 @@
+const { Personagens, selectRandomItem, createEmbed, handleCommandError, checkCooldown } = require('../varsFunctions.js');
+
 module.exports = {
     name: 'character',
 
-    async execute(interaction, Personagens, createEmbed) {
+    async execute(interaction) {
+        try {
+            // Check cooldown
+            const cooldownCheck = checkCooldown(interaction.user.id, 'character', 3000);
+            if (cooldownCheck.onCooldown) {
+                const cooldownEmbed = createEmbed(
+                    '#ffaa00',
+                    '⏰ Calma aí!',
+                    `Aguarde ${cooldownCheck.timeLeft}s antes de pedir outro personagem.`
+                );
+                return interaction.reply({ embeds: [cooldownEmbed], ephemeral: true });
+            }
 
-        console.log('Personagens:', Personagens);
-        const result = selectRandomItem(Personagens);
-        console.log('Resultado:', result);
+            const character = selectRandomItem(Personagens);
+            
+            const embed = createEmbed(
+                '#9b59b6',
+                '🎭 Personagem Aleatório',
+                `**Nome:** ${character.name}\n**Anime:** ${character.anime}\n**Descrição:** ${character.description}`
+            );
 
-        if (!result) {
-            return interaction.reply('Ocorreu um erro ao selecionar um personagem.');
+            await interaction.reply({ embeds: [embed] });
+
+        } catch (error) {
+            handleCommandError(interaction, error, 'character');
         }
-
-        let embed = createEmbed('#dbffff', `${result.text}`, `${result.description}`, '', `${result.img}`);
-        interaction.reply({ embeds: [embed] });
-
     }
-}
+};

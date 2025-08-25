@@ -3,23 +3,27 @@ const { YoutubeiExtractor } = require('discord-player-youtubei')
 const axios = require('axios');
 const regh = require('./registro.js');
 const discord = require('discord.js');
-const { RockPaperScissors, selectRandomItem, replyItems, Personagens, createEmbed } = require('./varsFunctions.js');
+const { 
+  RockPaperScissors, 
+  selectRandomItem, 
+  replyItems, 
+  Personagens, 
+  createEmbed, 
+  handleCommandError,
+  checkCooldown 
+} = require('./varsFunctions.js');
 const dotenv = require('dotenv');
 const login = process.env.TOKEN, apiKey = process.env.API_YOUTUBE;
 let volume1 = 100;
 dotenv.config();
 
-
 //Import Comandos
 
-const characterCommand = require('./comandos/character.js');
+// Music Commands
 const clearCommand = require('./comandos/clear.js');
-const inviteCommand = require('./comandos/invite.js');
 const loopCommand = require('./comandos/loop.js');
-const minigameCommand = require('./comandos/minigame.js');
 const nowplayingCommand = require('./comandos/nowplaying.js');
 const pauseCommand = require('./comandos/pause.js');
-const pingCommand = require('./comandos/ping.js')
 const playCommand = require('./comandos/play.js');
 const queueCommand = require('./comandos/queue.js');
 const resumeCommand = require('./comandos/resume.js');
@@ -28,15 +32,29 @@ const skipCommand = require('./comandos/skip.js');
 const stopCommand = require('./comandos/stop.js');
 const volumeCommand = require('./comandos/volume.js');
 
+// Utility Commands
+const inviteCommand = require('./comandos/invite.js');
+const pingCommand = require('./comandos/ping.js');
+const characterCommand = require('./comandos/character.js');
+
+// Game Commands
+const rpsCommand = require('./comandos/rps.js');
+const eightBallCommand = require('./comandos/8ball.js');
+const diceCommand = require('./comandos/dice.js');
+const triviaCommand = require('./comandos/trivia.js');
+const guessCommand = require('./comandos/guess.js');
+
+// Meme Commands
+const memeCommand = require('./comandos/meme.js');
+const jokeCommand = require('./comandos/joke.js');
+
 const commands = new Map();
-commands.set(characterCommand.name, characterCommand);
+
+// Music Commands
 commands.set(clearCommand.name, clearCommand);
-commands.set(inviteCommand.name, inviteCommand);
 commands.set(loopCommand.name, loopCommand);
-commands.set(minigameCommand.name, minigameCommand);
 commands.set(nowplayingCommand.name, nowplayingCommand);
 commands.set(pauseCommand.name, pauseCommand);
-commands.set(pingCommand.name, pingCommand);
 commands.set(playCommand.name, playCommand);
 commands.set(queueCommand.name, queueCommand);
 commands.set(resumeCommand.name, resumeCommand);
@@ -44,6 +62,22 @@ commands.set(shuffleCommand.name, shuffleCommand);
 commands.set(skipCommand.name, skipCommand);
 commands.set(stopCommand.name, stopCommand);
 commands.set(volumeCommand.name, volumeCommand);
+
+// Utility Commands
+commands.set(inviteCommand.name, inviteCommand);
+commands.set(pingCommand.name, pingCommand);
+commands.set(characterCommand.name, characterCommand);
+
+// Game Commands
+commands.set(rpsCommand.name, rpsCommand);
+commands.set(eightBallCommand.name, eightBallCommand);
+commands.set(diceCommand.name, diceCommand);
+commands.set(triviaCommand.name, triviaCommand);
+commands.set(guessCommand.name, guessCommand);
+
+// Meme Commands
+commands.set(memeCommand.name, memeCommand);
+commands.set(jokeCommand.name, jokeCommand);
 
 ////// Functions //////
 
@@ -71,7 +105,6 @@ function checkQueue(interaction) {
   }
 
   return queue;
-
 }
 
 async function adminReload() {
@@ -211,89 +244,86 @@ client.on('interactionCreate', async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
   if (!interaction.isCommand()) return;
 
-  const commandName = await interaction.commandName;
+  const commandName = interaction.commandName;
+  const command = commands.get(commandName);
 
-  switch (commandName) {
+  if (!command) {
+    console.log(`Comando não encontrado: ${commandName}`);
+    return;
+  }
 
-    case 'invite':
-      await commands.get('invite').execute(interaction);
-      break;
-
-    case 'play':
-      await commands.get('play').execute(interaction, player, checkVoiceChannel, createEmbed, volume1);
-      break;
-
-    case 'skip':
-      await commands.get('skip').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
-      break;
-
-    case 'queue':
-      await commands.get('queue').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
-      break;
-
-    case 'stop':
-      await commands.get('stop').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
-      break;
-
-    case 'pause':
-      await commands.get('pause').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
-      break;
-
-    case 'resume':
-      await commands.get('resume').execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
-      break;
-
-    case 'volume':
-      const novoVolume = await commands.get('volume').execute(interaction, checkQueue, createEmbed);
-      if (typeof novoVolume === 'number') {
-        volume1 = novoVolume;
-      }
-      break;
-
-    case 'shuffle':
-      await commands.get('shuffle').execute(interaction, checkQueue, createEmbed);
-      break;
-
-    case 'nowplaying':
-      await commands.get('nowplaying').execute(interaction, checkQueue, createEmbed);
-      break;
-
-    case 'loop':
-      await commands.get('loop').execute(interaction, checkQueue, createEmbed);
-      break;
-
-    case 'clear':
-      await commands.get('clear').execute(interaction, checkQueue, checkVoiceChannel, createEmbed);
-      break;
-
-    case 'character':
-      await commands.get('character').execute(interaction, Personagens, createEmbed);
-      break;
-
-    case 'ping':
-      await commands.get('ping').execute(interaction, replyItems);
-      break;
-
-    case 'minigame':
-      await commands.get('minigame').execute(interaction, selectRandomItem, RockPaperScissors, createEmbed);
-      break;
-
-    default:
-      console.log('Ouve um erro, opção nao especificada.')
-      break;
-  };
-
+  try {
+    switch (commandName) {
+      // Music Commands
+      case 'play':
+        await command.execute(interaction, player, checkVoiceChannel, createEmbed, volume1);
+        break;
+      
+      case 'skip':
+      case 'queue':
+      case 'stop':
+      case 'pause':
+      case 'resume':
+      case 'shuffle':
+      case 'nowplaying':
+      case 'loop':
+        await command.execute(interaction, checkVoiceChannel, checkQueue, createEmbed);
+        break;
+      
+      case 'clear':
+        await command.execute(interaction, checkQueue, checkVoiceChannel, createEmbed);
+        break;
+      
+      case 'volume':
+        const novoVolume = await command.execute(interaction, checkQueue, createEmbed);
+        if (typeof novoVolume === 'number') {
+          volume1 = novoVolume;
+        }
+        break;
+      
+      // Utility Commands
+      case 'invite':
+      case 'ping':
+      case 'character':
+      case 'rps':
+      case '8ball':
+      case 'dice':
+      case 'trivia':
+      case 'meme':
+      case 'joke':
+        await command.execute(interaction);
+        break;
+      
+      case 'guess':
+        const guessNumber = interaction.options.getInteger('numero');
+        if (guessNumber !== null) {
+          await command.handleGuess(interaction, guessNumber);
+        } else {
+          await command.execute(interaction);
+        }
+        break;
+      
+      default:
+        console.log(`Comando não implementado: ${commandName}`);
+        break;
+    }
+  } catch (error) {
+    handleCommandError(interaction, error, commandName);
+  }
 });
 
 client.on('messageCreate', (message) => {
-  let conteudo = message.content
-  let admin = 680480327616954370
-  if (conteudo == 'adminReload') {
-    if (message.author = !admin) {
-      message.reply({ content: `${message.author} Você não tem permissão para realizar um reload!`, ephemeral: true })
+  if (message.author.bot) return;
+  
+  const conteudo = message.content;
+  const adminId = '680480327616954370';
+  
+  if (conteudo === 'adminReload') {
+    if (message.author.id !== adminId) {
+      message.reply({ content: `${message.author}, você não tem permissão para realizar um reload!` });
     } else {
-      message.reply({ content: `Bem vindo ${message.id}!, Iniciando Reload: Application **RESET** for **ALL SERVERS**\nReload Solicitado em ${message.channel}, ${message.guild}`, ephemeral: true })
-      adminReload()
+      message.reply({ content: `Bem vindo ${message.author}! Iniciando Reload: Application **RESET** for **ALL SERVERS**\nReload solicitado em ${message.channel}, ${message.guild}` });
+      adminReload();
     }
   }
 })

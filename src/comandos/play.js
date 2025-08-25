@@ -1,26 +1,42 @@
+const { handleCommandError } = require('../varsFunctions.js');
+
 module.exports = {
     name: 'play',
 
     async execute(interaction, player, checkVoiceChannel, createEmbed, volume1) {
-
-        if (!checkVoiceChannel(interaction)) return;
-
-        const args = interaction.options.getString('url');
-        if (!args) return interaction.reply({ content: 'Me dê algo para buscar!!', ephemeral: true });
-
-        await interaction.deferReply();
-
         try {
+            if (!checkVoiceChannel(interaction)) {
+                const embed = createEmbed(
+                    '#ff6b6b',
+                    '❌ Canal de Voz Necessário',
+                    'Você precisa estar em um canal de voz para usar este comando!'
+                );
+                return interaction.reply({ embeds: [embed], ephemeral: true });
+            }
+
+            const args = interaction.options.getString('url');
+            if (!args) {
+                const embed = createEmbed(
+                    '#ff6b6b',
+                    '❌ Parâmetro Necessário',
+                    'Me dê algo para buscar! (URL ou nome da música)'
+                );
+                return interaction.reply({ embeds: [embed], ephemeral: true });
+            }
+
+            await interaction.deferReply();
 
             const searchResult = await player.search(args, {
                 requestedBy: interaction.user,
-
             });
 
             if (!searchResult.hasTracks()) {
-
-                return interaction.editReply({ content: 'Não foi possível encontrar resultados para sua busca.', ephemeral: true });
-
+                const embed = createEmbed(
+                    '#ff9500',
+                    '🔍 Nenhum Resultado',
+                    `Não foi possível encontrar resultados para: **${args}**`
+                );
+                return interaction.editReply({ embeds: [embed] });
             }
 
             const playOptions = {
@@ -39,41 +55,17 @@ module.exports = {
                 },
             };
 
-            let embed = createEmbed('#fff4ce', '🔎 Busca iniciada...', `Procurando por: **${args}**`);
-
+            const embed = createEmbed(
+                '#fff4ce', 
+                '🔎 Busca iniciada...', 
+                `Procurando por: **${args}**`
+            );
             await interaction.editReply({ embeds: [embed] });
 
-            try {
-
-                await player.play(interaction.member.voice.channel, searchResult, playOptions);
-
-            } catch (e) {
-
-                console.error('Erro durante player.play:', e);
-
-                await interaction.followUp({
-                    content: `Ocorreu um erro ao tentar tocar a música: ${e.message}. Verifique os logs.`,
-                    ephemeral: true
-                });
-
-                return;
-            }
+            await player.play(interaction.member.voice.channel, searchResult, playOptions);
 
         } catch (error) {
-
-            console.error(`Erro no comando play: ${error}`);
-
-            if (!interaction.replied && !interaction.deferred) {
-
-                await interaction.reply({ content: 'Ocorreu um erro geral ao processar sua solicitação.', ephemeral: true });
-
-            } else {
-
-                await interaction.editReply({
-                    content: 'Ocorreu um erro geral ao processar sua solicitação. Verifique os logs do bot.',
-
-                });
-            }
+            handleCommandError(interaction, error, 'play');
         }
     },
 };

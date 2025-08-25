@@ -3,65 +3,121 @@ const { REST, Routes, ApplicationCommandOptionType } = require('discord.js');
 const { QueueRepeatMode } = require('discord-player')
 
 const command = [
-
+    // Utility Commands
     {
         name: 'ping',
-        description: 'Replies with Pong!',
-        options: []
+        description: 'Mostra a latência do bot'
+    },
+    {
+        name: 'invite',
+        description: 'Fornece o link para convidar este bot para outros servidores'
+    },
+    {
+        name: 'character',
+        description: 'Mostra um personagem de anime aleatório'
     },
 
+    // Game Commands
     {
-        name: 'minigame',
+        name: 'rps',
         description: 'Jogue pedra, papel ou tesoura comigo!',
         options: [
             {
-                name: 'jogada_usuario',  // Renomeei para 'jogada_usuario'
+                name: 'escolha',
                 description: 'Escolha entre pedra, papel ou tesoura!',
                 type: ApplicationCommandOptionType.String,
                 choices: [
-                    {
-                        name: 'pedra',
-                        value: 'pedra',
-                    },
-                    {
-                        name: 'papel',
-                        value: 'papel',
-                    },
-                    {
-                        name: 'tesoura',
-                        value: 'tesoura',
-                    },
+                    { name: 'Pedra ', value: 'pedra' },
+                    { name: 'Papel ', value: 'papel' },
+                    { name: 'Tesoura ', value: 'tesoura' }
                 ],
-                required: true,
-            },
-        ],
+                required: true
+            }
+        ]
     },
-
     {
-        name: 'character',
-        description: 'Envia um Personagem aleatorio'
+        name: '8ball',
+        description: 'Faça uma pergunta para a bola 8 mágica!',
+        options: [
+            {
+                name: 'pergunta',
+                description: 'Sua pergunta para a bola 8',
+                type: ApplicationCommandOptionType.String,
+                required: true
+            }
+        ]
+    },
+    {
+        name: 'dice',
+        description: 'Role dados com número personalizado de lados',
+        options: [
+            {
+                name: 'lados',
+                description: 'Número de lados do dado (2-100)',
+                type: ApplicationCommandOptionType.Integer,
+                required: false
+            },
+            {
+                name: 'quantidade',
+                description: 'Quantos dados rolar (1-10)',
+                type: ApplicationCommandOptionType.Integer,
+                required: false
+            }
+        ]
+    },
+    {
+        name: 'trivia',
+        description: 'Responda uma pergunta de trivia!'
+    },
+    {
+        name: 'guess',
+        description: 'Jogo de adivinhação - adivinhe o número que pensei!',
+        options: [
+            {
+                name: 'maximo',
+                description: 'Número máximo para adivinhar (padrão: 100)',
+                type: ApplicationCommandOptionType.Integer,
+                required: false
+            },
+            {
+                name: 'numero',
+                description: 'Seu palpite (use apenas quando já tiver um jogo ativo)',
+                type: ApplicationCommandOptionType.Integer,
+                required: false
+            }
+        ]
     },
 
+    // Meme Commands
+    {
+        name: 'meme',
+        description: 'Receba um meme aleatório para alegrar seu dia!'
+    },
+    {
+        name: 'joke',
+        description: 'Receba uma piada do papai para dar risada!'
+    },
+
+    // Music Commands
     {
         name: 'play',
         description: 'Selecione uma música e comece a escutar!',
-        required: true,
         options: [
             {
                 name: 'url',
-                description: 'Direcione a URL da musica que deseja!',
+                description: 'URL ou nome da música que deseja tocar',
                 type: ApplicationCommandOptionType.String,
-                required: true,
-            },
-        ],
+                required: true
+            }
+        ]
     },
     {
         name: 'skip',
-        description: 'Pula para proxima musica da fila atual'
+        description: 'Pula para próxima música da fila atual'
     },
     {
         name: 'stop',
-        description: 'Para e limpa a ffila atual'
+        description: 'Para e limpa a fila atual'
     },
     {
         name: 'queue',
@@ -73,7 +129,7 @@ const command = [
     },
     {
         name: 'resume',
-        description: 'Continua a musica pausada'
+        description: 'Continua a música pausada'
     },
     {
         name: 'volume',
@@ -81,11 +137,11 @@ const command = [
         options: [
             {
                 name: 'vol',
-                description: 'coloque o valor a ser alterado!',
+                description: 'Volume desejado (0-200)',
                 type: ApplicationCommandOptionType.Integer,
-                required: true,
-            },
-        ],
+                required: true
+            }
+        ]
     },
     {
         name: 'loop',
@@ -97,46 +153,38 @@ const command = [
                 type: ApplicationCommandOptionType.Number,
                 required: true,
                 choices: [
-
                     {
                         name: 'Off',
-                        value: QueueRepeatMode.OFF,
+                        value: QueueRepeatMode.OFF
                     },
                     {
-                        name: 'Musica',
-                        value: QueueRepeatMode.TRACK,
+                        name: 'Música',
+                        value: QueueRepeatMode.TRACK
                     },
                     {
                         name: 'Playlist',
-                        value: QueueRepeatMode.QUEUE,
+                        value: QueueRepeatMode.QUEUE
                     },
                     {
                         name: 'Autoplay',
-                        value: QueueRepeatMode.AUTOPLAY,
-                    },
+                        value: QueueRepeatMode.AUTOPLAY
+                    }
                 ]
-
             }
         ]
-
     },
     {
         name: 'shuffle',
-        description: 'Deixa a fila em ordem aleatória',
+        description: 'Deixa a fila em ordem aleatória'
     },
     {
         name: 'nowplaying',
-        description: 'Mostra a musica tocando atualmente',
+        description: 'Mostra a música tocando atualmente'
     },
     {
         name: 'clear',
-        description: 'Limpa a Playlist atual, deixando-a zerada',
-    },
-    {
-        name: 'invite',
-        description: 'Fornece o link para convidar este bot para outros servidores.',
-    },
-
+        description: 'Limpa a Playlist atual, deixando-a zerada'
+    }
 ];
 
 const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);

@@ -1,55 +1,29 @@
+const { replyItems, selectRandomItem, createEmbed, handleCommandError } = require('../varsFunctions.js');
+
 module.exports = {
     name: 'ping',
 
-    async execute(interaction, replyItems) {
-
-        function selectRandomItem(items) {
-
-            const random = Math.random();
-            let sum = 0;
-
-            for (const item of items) {
-
-                sum += item.probability;
-
-                if (random <= sum) {
-
-                    return item.text;
-
-                }
-            }
-
-            return "Pong!"; // Fallback
-        }
-
+    async execute(interaction) {
         try {
+            const sent = await interaction.reply({ 
+                content: 'Calculando ping...', 
+                fetchReply: true 
+            });
+            
+            const latency = sent.createdTimestamp - interaction.createdTimestamp;
+            const apiLatency = Math.round(interaction.client.ws.ping);
+            const response = selectRandomItem(replyItems);
 
-            // Responder imediatamente ou deferir
-            if (interaction.deferred || interaction.replied) {
+            const embed = createEmbed(
+                '#00ff00',
+                '🏓 Pong!',
+                `${response}\n\n📡 **Latência:** ${latency}ms\n🌐 **API:** ${apiLatency}ms`
+            );
 
-                const response = selectRandomItem(replyItems);
-                await interaction.editReply(response);
-
-            } else {
-
-                const response = selectRandomItem(replyItems);
-                await interaction.reply(response);
-
-            }
+            await interaction.editReply({ content: '', embeds: [embed] });
 
         } catch (error) {
-
-            console.error('Erro ao executar o comando ping:', error);
-
-            if (interaction.deferred || interaction.replied) {
-
-                await interaction.editReply('Ocorreu um erro ao executar este comando.');
-
-            } else {
-
-                await interaction.reply('Ocorreu um erro ao executar este comando.');
-
-            }
+            handleCommandError(interaction, error, 'ping');
         }
     }
 };
