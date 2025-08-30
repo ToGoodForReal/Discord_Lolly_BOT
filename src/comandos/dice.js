@@ -28,11 +28,11 @@ module.exports = {
                 return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
 
-            if (quantity < 1 || quantity > 10) {
+            if (quantity < 1 || quantity > 100) {
                 const errorEmbed = createEmbed(
                     '#ff6b6b',
                     '❌ Quantidade Inválida',
-                    'Você pode rolar entre 1 e 10 dados!'
+                    'Você pode rolar entre 1 e 100 dados!'
                 );
                 return interaction.reply({ embeds: [errorEmbed], ephemeral: true });
             }
