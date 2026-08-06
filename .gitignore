@@ -1,2 +1,7 @@
+node_modules/
+dist/
 .env
-node_modules
+*.log
+.DS_Store
+coverage/
+web_search_tool/
